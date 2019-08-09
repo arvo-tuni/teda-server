@@ -1,0 +1,20 @@
+{
+  "name": "arvo-log-server",
+  "version": "0.0.1",
+  "description": "Gaze analysis & visualization for tests in ARVO",
+  "main": "index.js",
+  "scripts": {
+    "start": "node -r esm ./js/app.js",
+    "tests": "node -r esm ./tests/index.js"
+  },
+  "author": "Oleg Spakov",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "winston": "^3.2.1"
+  },
+  "devDependencies": {
+    "esm": "^3.2.25"
+  }
+}
