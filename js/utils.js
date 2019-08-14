@@ -52,7 +52,10 @@ export function copy( src, dest, types ) {
             throw new Error( `Unknown data type in the record: "${k}" = "${src[k]}" (dest : ${JSON.stringify( dest )})` );
         }
 
-        if (type === Number || type === String || type === Boolean) {
+        if (type === Number) {
+            dest[k] = type( src[k] );
+        }
+        else if (type === String || type === Boolean) {
             dest[k] = type( src[k] );
         }
         else if (type === Date) {
@@ -85,7 +88,10 @@ export function copy( src, dest, types ) {
  * @returns {*}
  */
 export function copyValue( src, type ) {
-    if (type === Number || type === String || type === Boolean) {
+    if (type === Number) {
+      return type( src );
+    }
+    else if (type === String || type === Boolean) {
         return type( src );
     }
     else if ((new type()) instanceof Date) {

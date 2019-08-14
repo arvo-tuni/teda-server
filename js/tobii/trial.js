@@ -88,6 +88,8 @@ export default class Trial {
                 return;
             }
 
+            values = values.map( v => v.replace(',', '.'));
+
             // timestamp correction
             const recDate = this.general.RecordingDate;
             timestamp.LocalTimeStamp.setFullYear( recDate.getFullYear(), recDate.getMonth(), recDate.getDate() );

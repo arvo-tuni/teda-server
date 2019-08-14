@@ -247,6 +247,7 @@ function loadTrials() {
     // This may change in future
     const HOURS_OFFSET = 2;
     trials.forEach( trial => {
+        trial.timestamp.setHours( trial.timestamp.getHours() + HOURS_OFFSET );
         trial.startTime.setHours( trial.startTime.getHours() + HOURS_OFFSET );
         trial.endTime.setHours( trial.endTime.getHours() + HOURS_OFFSET );
         trial.events.forEach( event => event.timestamp.setHours( event.timestamp.getHours() + HOURS_OFFSET ) );
