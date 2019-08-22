@@ -2,11 +2,7 @@ import fs from 'fs';
 
 export default class Folder {
 
-  /**
-   * @param {string} folder
-   * @returns {string[]}
-   */
-  static subfolders( folder ) {
+  static subfolders( folder: string ): string[] {
     const names = fs.readdirSync( folder );
     const subfolders = names.filter( name => fs.statSync( `${folder}/${name}` ).isDirectory() );
     if (subfolders.length) {
@@ -16,12 +12,7 @@ export default class Folder {
     return [];
   }
 
-  /**
-   * @param {string} folder
-   * @param {RegExp} [re]
-   * @returns {string[]}
-   */
-  static listFiles( folder, re ) {
+  static listFiles( folder: string, re?: RegExp ): string[] {
     const filenames = fs.readdirSync( folder );
     if (re)
       return filenames.filter( filename => re.test( filename ) );

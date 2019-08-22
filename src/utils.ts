@@ -1,10 +1,7 @@
 /**
  * Type identification
- * @param {*[]} types candidates
- * @param {*} src object which the inditidication is apllied to
- * @returns {*}
  */
-function estimateType( types, src ) {
+function estimateType( types: any[], src: any ): any {
 
   if (types.length === 1) {
     return types[0];
@@ -34,11 +31,8 @@ function estimateType( types, src ) {
 //let indent = 0;
 /**
  * Deep copy according to schema
- * @param {*} src data from the file
- * @param {*} dest destination of the data to copy to; initially contains the src type taken from schema
- * @param {*[]} [types] possible types of src, if more that one is expected
  */
-export function copy( src, dest, types ) {
+export function copy( src: any, dest: any, types?: any[] ) {
 
   Object.keys( src ).forEach( k => {
 //console.log(' '.repeat(indent), k); indent += 2;
@@ -85,11 +79,9 @@ export function copy( src, dest, types ) {
 
 /**
  * Flat value-copy according to schema
- * @param {*} src value
- * @param {*} type the src type; for arrays, only one type is allowed
- * @returns {*}
+ * "type": for arrays, only one type is allowed
  */
-export function copyValue( src, type ) {
+export function copyValue( src: any, type: any ): any {
   if (type === Number) {
     return type( src );
   }
@@ -117,9 +109,8 @@ export function copyValue( src, type ) {
 
 /**
  * Removes unused fields after copying
- * @param {*} obj value
  */
-export function clearUnused( obj ) {
+export function clearUnused( obj: any ) {
   Object.keys( obj ).forEach( k => {
     const type = obj[k];
     if (type === Number) {

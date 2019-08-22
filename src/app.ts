@@ -11,11 +11,9 @@ import logger from './logger';
 
 const folders = Folder.subfolders( options['data-folder'] );
 
-/** @type {string} */
-let testFolder = null;
+let testFolder = '';
 
-/** @type {WebTrial[]} */
-let trials = null;
+let trials: WebTrial[] = [];
 
 const app = express();
 
@@ -35,7 +33,7 @@ app.use( (req, res, next) => {
     }
   }
   else if (req.url.startsWith( '/trial/' )) {
-    if (!trials) {
+    if (trials.length === 0) {
       const error = 'trials were not loaded yet';
       res.status( 403 ).json( { error } );
       logger.warn( error );
@@ -183,12 +181,12 @@ if (!options.help) {
 }
 
 
-function provideTrack( id, data, res ) {
+function provideTrack( id: string, data: string, res: express.Response ) {
 
   const trial = trials.find( trial => trial._id === id );
 
   if ( trial ) {
-    const obj = data ? trial[ data ] : trial;
+    const obj = data ? (trial as any)[ data ] : trial;
     res.status( 200 ).json( obj );
     logger.verbose( 'OK' );
   }
@@ -199,7 +197,7 @@ function provideTrack( id, data, res ) {
   }
 }
 
-function provideGazeData( id, data, res ) {
+function provideGazeData( id: string, data: string, res: express.Response ) {
 
   const trial = trials.find( trial => trial._id === id );
 
@@ -232,13 +230,13 @@ function loadTrials() {
   }
 
   try {
-    trials = Trials.readWebTxtLog( `${testFolder}/${webLogs[0]}` );
+    trials = Trials.readWebTxtLog( `${testFolder}/${webLogs[0]}` ) || [];
   }
   catch (ex) {
     return `weblog file is corrupted: ${ex.message || ex}`;
   }
 
-  if (!trials) {
+  if (trials.length === 0) {
     return `weblog file is corrupted`;
   }
 
@@ -265,11 +263,24 @@ function loadTrials() {
     const tobiiLogs = tobiiLogFiles.map( tobiiLogFile => Trials.readTobiiLog( `${testFolder}/${tobiiLogFile}` ) );
 
     trials.forEach( trial => {
-      const startTime = trial.events.find( e => e.type === 'start' ).timestamp.getTime(); // + 2*60*60*1000;
-      const endTime = trial.events.find( e => e.type === 'end' ).timestamp.getTime(); // + 2*60*60*1000;
+      let trialGaze = tobiiLogs.find( tobiiLog => 
+        !!tobiiLog ? tobiiLog.general.ParticipantName === trial.participantCode : false );
 
-      trial.gaze = tobiiLogs.find( tobiiLog => tobiiLog.general.ParticipantName === trial.participantCode )
-                   .range( startTime, endTime );
+      if (!trialGaze) {
+        return;
+      }
+
+      const startTimeEvent = trial.events.find( e => e.type === 'start' );
+      const endTimeEvent = trial.events.find( e => e.type === 'end' );
+      if (startTimeEvent && endTimeEvent) {
+        const startTime = startTimeEvent.timestamp.getTime(); // + 2*60*60*1000;
+        const endTime = endTimeEvent.timestamp.getTime(); // + 2*60*60*1000;
+
+        trialGaze = trialGaze.range( startTime, endTime );
+      }
+
+      trial.gaze = trialGaze;
+                   
 
       if (!trial.gaze) {
         return `invalid data: no gaze data for participant ${trial.participantCode}`;

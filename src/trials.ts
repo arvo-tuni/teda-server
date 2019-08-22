@@ -6,18 +6,14 @@ import TobiiTrial from './tobii/trial';
 
 import logger from './logger';
 
+type Callback<T> = (arg: string) => T | null;
+
 export class Trials {
 
-  /**
-   * @param {string} source filename or folder
-   */
-  constructor( source ) {
+  public webTrials: WebTrial[] = [];
+  public tobiiTrials: TobiiTrial[] = [];
 
-    /** @type {WebTrial[]} */
-    this.webTrials = [];
-
-    /** @type {TobiiTrial[]} */
-    this.tobiiTrials = [];
+  constructor( source: string ) {
 
     let filenames = [ source ];
 
@@ -32,10 +28,14 @@ export class Trials {
 
       try {
         if (ext === 'txt') {
-          this.webTrials = this.webTrials.concat( Trials.readWebTxtLog( filename ) );
+          const webTrials = Trials.readWebTxtLog( filename );
+          this.webTrials = this.webTrials.concat( webTrials );
         }
         if (ext === 'tsv') {
-          this.tobiiTrials.push( Trials.readTobiiLog( filename ) );
+          const tobiiTrial = Trials.readTobiiLog( filename );
+          if (tobiiTrial) {
+            this.tobiiTrials.push( tobiiTrial );
+          }
         }
         else {
           throw new Error( 'handling other files is not implemented yet' );
@@ -47,17 +47,13 @@ export class Trials {
     });
   }
 
-  /**
-   * @param {string} filename
-   * @returns {WebTrial[]}
-   */
-  static readWebTxtLog( filename ) {
+  static readWebTxtLog( filename: string ): WebTrial[] {
 
     logger.verbose( `reading Web log "${filename}"` );
 
-    let lastTimestamp;
+    let lastTimestamp: Date;
 
-    return Trials._read( filename, row => {
+    return Trials._read<WebTrial>( filename, row => {
       if (row[0] === '{') {
         const jsonRecord = JSON.parse( row );
         return new WebTrial( lastTimestamp, jsonRecord );
@@ -76,18 +72,13 @@ export class Trials {
     });
   }
 
-  /**
-   * @param {string} filename
-   * @returns {TobiiTrial}
-   */
-  static readTobiiLog( filename ) {
+  static readTobiiLog( filename: string ): TobiiTrial | null {
 
-    /** @type {TobiiTrial} */
-    let trial = null;
+    let trial: TobiiTrial | null = null;
 
     logger.verbose( `reading Tobii log "${filename}"` );
 
-    Trials._read( filename, row => {
+    Trials._read<TobiiTrial>( filename, row => {
 
       if (!trial) {    // the first log line contains a header
         trial = new TobiiTrial( row.split( '\t' ) );
@@ -95,19 +86,16 @@ export class Trials {
       else {
         trial.add( row.split( '\t' ) );
       }
+
+      return null;
     });
 
     return trial;
   }
 
-  /**
-   * @param {string} filename - full path to the file
-   * @param {function(string): any | null} cb - callback, fires with each line
-   * @returns {*[]}
-   */
-  static _read( filename, cb ) {
+  static _read<T>( filename: string, cb: Callback<T> ): T[] {
 
-    const result = [];
+    const result: T[] = [];
     let buffer;
 
     try {
