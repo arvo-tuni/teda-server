@@ -7,6 +7,9 @@ import Folder from './folder';
 import { Trials } from  './trials';
 import WebTrial from  './web/trial';
 
+import * as Stats from './statistics/statistics';
+import * as Transform from './statistics/transform';
+
 import logger from './logger';
 
 const folders = Folder.subfolders( options['data-folder'] );
@@ -71,6 +74,7 @@ app.get( '/', ( req, res ) => {
         '/trial/:id/gaze/fixations': 'the trial fixations',
         '/trial/:id/gaze/saccades': 'the trial saccades',
         '/trial/:id/gaze/gazeAways': 'the trial gazeAways',
+        '/trial/:id/stats': 'the trial statistics',
       }
     }
   });
@@ -172,6 +176,10 @@ app.get( '/trial/:id/gaze/gazeAways', ( req, res ) => {
   provideGazeData( req.params.id, 'gazeAways', res );
 });
 
+app.get( '/trial/:id/stats', ( req, res ) => {
+  provideStats( req.params.id, res );
+});
+
 
 // start
 if (!options.help) {
@@ -191,7 +199,7 @@ function provideTrack( id: string, data: string, res: express.Response ) {
     logger.verbose( 'OK' );
   }
   else {
-    const error = `no such track "${id}"`;
+    const error = `no such trial "${id}"`;
     res.status( 404 ).json( { error });
     logger.warn( error );
   }
@@ -212,7 +220,30 @@ function provideGazeData( id: string, data: string, res: express.Response ) {
     logger.verbose( 'OK' );
   }
   else {
-    const error = `no such track "${id}"`;
+    const error = `no such trial "${id}"`;
+    res.status( 404 ).json( { error });
+    logger.warn( error );
+  }
+}
+
+function provideStats( id: string, res: express.Response) {
+  const trial = trials.find( trial => trial._id === id );
+
+  if ( trial ) {
+    const clicks = Transform.clicks( trial.events, trial.metaExt.startTime );
+    const scrolls = Transform.scrolls( trial.events, trial.metaExt.startTime );
+    const veroEvents = Transform.vero( trial.events, trial.metaExt.startTime );
+  
+    const obj = {
+      hitsTimed: Stats.hitsTimed( trial.hitsPerTenth ),
+      veroTimed: Stats.veroTimed( veroEvents, clicks, scrolls ),
+    } as Stats.All;
+
+    res.status( 200 ).json( obj );
+    logger.verbose( 'OK' );
+  }
+  else {
+    const error = `no such trial "${id}"`;
     res.status( 404 ).json( { error });
     logger.warn( error );
   }

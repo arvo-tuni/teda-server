@@ -225,7 +225,7 @@ export class Schema {
     this.settings = Settings;
     //** @type {Number[]} */
     //this.hitsPerTenth = [ Number ];     // int, 10 values
-    /** @type {WrongAndCorrect[]} */
+    /** @type {WrongAndCorrect[] & number[]} */
     this.hitsPerTenth = [ Number, WrongAndCorrect ];     // 10 values
     /** @type {Clickable[]} */
     this.clickables = [ Clickable ];

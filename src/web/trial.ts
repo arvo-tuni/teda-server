@@ -1,16 +1,21 @@
 import crypto from 'crypto';
 
 import * as WebLog from './log';
+import { TrialMeta, TrialMetaExt } from './meta';
 
 import { copy, clearUnused } from '../utils';
 
 export default class Trial extends WebLog.Schema {
 
+  public _id: string;
+  public timestamp: Date;
+  public gaze: any = null;    // to be assigned externally
+
   /**
    * @param {Date} timestamp 
    * @param {any} json
    */
-  constructor( timestamp, json ) {
+  constructor( timestamp: Date, json: any ) {
 
     super();
     
@@ -20,13 +25,11 @@ export default class Trial extends WebLog.Schema {
     this._id = hash.digest( 'hex' ).substr( 0, 8 );
     this.timestamp = timestamp;
 
-    this.gaze = null; // to be assigned externally
-
     copy( json, this );
     clearUnused( this );
   }
 
-  get meta() {
+  get meta(): TrialMeta {
     return {
       _id: this._id,
       participant: this.participantCode,
@@ -35,9 +38,9 @@ export default class Trial extends WebLog.Schema {
     };
   }
 
-  get metaExt() {
+  get metaExt(): TrialMetaExt {
 
-    const result = {
+    const result: any = {
         rate: this.marks / this.clickables.length
     };
 
