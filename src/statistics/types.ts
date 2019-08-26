@@ -35,21 +35,6 @@ export interface Hits {
   wrong: number[];
 }
 
-export interface UserEvent {
-  x: number;
-  y: number;
-  name?: string;
-  value?: string | number;
-}
-
-export interface UserEvents {
-  navigation?: UserEvent[],
-  data?: UserEvent[],
-  ui?: UserEvent[],
-  clicks?: UserEvent[],
-  scrolls?: UserEvent[],
-};
-
 export interface Fixation {
   timestamp: Timestamp;
   x: number;
