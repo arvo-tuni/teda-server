@@ -4,10 +4,11 @@ import cors from 'cors';
 
 import options from './options';
 import Folder from './folder';
-import { Trials } from  './trials';
-import WebTrial from  './web/trial';
+import { Trials } from './trials';
+import WebTrial from './web/trial';
 
 import * as Stats from './statistics/statistics';
+import { Data as Statistics } from './statistics/types';
 import * as Transform from './statistics/transform';
 
 import logger from './logger';
@@ -209,8 +210,8 @@ function provideGazeData( id: string, data: string, res: express.Response ) {
 
   const trial = trials.find( trial => trial._id === id );
 
-  if ( trial ) {
-    const obj = data ? trial.gaze[ data ] : trial.gaze;
+  if (trial && trial.gaze) {
+    const obj = data ? (trial.gaze as any)[ data ] : trial.gaze;
 
     if (Array.isArray(obj)) {
       logger.verbose( `sending ${obj.length} items` );
@@ -229,15 +230,27 @@ function provideGazeData( id: string, data: string, res: express.Response ) {
 function provideStats( id: string, res: express.Response) {
   const trial = trials.find( trial => trial._id === id );
 
-  if ( trial ) {
-    const clicks = Transform.clicks( trial.events, trial.metaExt.startTime );
-    const scrolls = Transform.scrolls( trial.events, trial.metaExt.startTime );
-    const veroEvents = Transform.vero( trial.events, trial.metaExt.startTime );
-  
+  if ( trial && trial.gaze) {
+    const fixations = Transform.fixations(
+      trial.gaze.fixations,
+      trial.events,
+    );
+
+    const saccades = Transform.saccades( trial.gaze.fixations );
+
     const obj = {
-      hitsTimed: Stats.hitsTimed( trial.hitsPerTenth ),
-      veroTimed: Stats.veroTimed( veroEvents, clicks, scrolls ),
-    } as Stats.All;
+      hits: Stats.hitsTimed( trial.hitsPerTenth ),
+      fixations: {
+        durationRanges: Stats.fixDurationsRange( fixations ),
+        durationTimes: Stats.fixDurationsTime( fixations ),
+      },
+      saccades: {
+        directions: Stats.saccadeDirections( saccades ),
+        directionsRadar: Stats.saccadeDirectionRadar( saccades ),
+        amplitudeRanges: Stats.saccadeAmplitudeRange( saccades ),
+        amplitudeTimes: Stats.saccadeAmplitudeTime( saccades ),
+      },
+    } as Statistics;
 
     res.status( 200 ).json( obj );
     logger.verbose( 'OK' );

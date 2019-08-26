@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 
 import * as WebLog from './log';
+import TobiiTrial from '../tobii/trial';
 import { TrialMeta, TrialMetaExt } from './meta';
 
 import { copy, clearUnused } from '../utils';
@@ -9,7 +10,7 @@ export default class Trial extends WebLog.Schema {
 
   public _id: string;
   public timestamp: Date;
-  public gaze: any = null;    // to be assigned externally
+  public gaze: TobiiTrial | null = null;    // to be assigned externally
 
   /**
    * @param {Date} timestamp 
