@@ -89,4 +89,6 @@ typings/
 
 # custom
 data/
+data-old/
 build/
+arvo.json

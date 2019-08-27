@@ -3,6 +3,7 @@ import fs from 'fs';
 import cors from 'cors';
 
 import options from './options';
+import Storage from './storage';
 import Folder from './folder';
 import { Trials } from './trials';
 import WebTrial from './web/trial';
@@ -13,11 +14,41 @@ import * as Transform from './statistics/transform';
 
 import logger from './logger';
 
+class Test {
+  folder = '';
+  public trials: WebTrial[] = [];
+}
+
+let currentTest: Test | null = null;
+
 const folders = Folder.subfolders( options['data-folder'] );
 
-let testFolder = '';
+const storage = new Storage();
+storage.on( 'statistics', name => {
 
-let trials: WebTrial[] = [];
+  const folder = `${options['data-folder']}/${name}`;
+  logger.verbose( `Storage: appending statistics for "${folder}" ...` );
+
+  const result = loadTrials( folder );
+  const error = result as Error;
+
+  if (!error || !error.message) {
+    const test = result as Test;
+    test.trials.forEach( trial => {
+      const statistics = calculateStatistics( trial );
+      if (statistics) {
+        storage.append( name, trial._id, statistics );
+      }
+    });
+
+    logger.verbose( '   done' );
+  }
+  else {
+    logger.error( error.message );
+  }
+});
+
+storage.update();
 
 const app = express();
 
@@ -29,7 +60,7 @@ app.use( (req, res, next) => {
   logger.verbose( `${req.method.toUpperCase()} ${req.path}${req.params.id ? ':' + req.params.id : ''}` );
 
   if (req.url.startsWith( '/trials' )) {
-    if (!testFolder) {
+    if (!currentTest) {
       const error = 'test was not selected yet';
       res.status( 403 ).json( { error } );
       logger.warn( error );
@@ -37,7 +68,7 @@ app.use( (req, res, next) => {
     }
   }
   else if (req.url.startsWith( '/trial/' )) {
-    if (trials.length === 0) {
+    if (!currentTest || currentTest.trials.length === 0) {
       const error = 'trials were not loaded yet';
       res.status( 403 ).json( { error } );
       logger.warn( error );
@@ -76,6 +107,7 @@ app.get( '/', ( req, res ) => {
         '/trial/:id/gaze/saccades': 'the trial saccades',
         '/trial/:id/gaze/gazeAways': 'the trial gazeAways',
         '/trial/:id/stats': 'the trial statistics',
+        '/trial/:id/stats/update': 'updates statistics when a new data folder was added',
       }
     }
   });
@@ -91,15 +123,15 @@ app.put( '/test/:id', ( req, res ) => {
   const folder = `${options['data-folder']}/${req.params.id}`;
   if (fs.existsSync( folder )) {
 
-    testFolder = folder;
+    const result = loadTrials( folder );
+    const error = result as Error;
 
-    const error = loadTrials();
-
-    if (error) {
+    if (error && error.message) {
       res.status( 500 ).json( { error });
       logger.error( error );
     }
     else {
+      currentTest = result as Test;
       res.status( 200 ).json( { message: 'OK' });
       logger.verbose( 'OK' );
     }
@@ -112,7 +144,11 @@ app.put( '/test/:id', ( req, res ) => {
 });
 
 app.get( '/trials', ( req, res ) => {
-  const result = trials.map( trial => trial.meta );
+  if (!currentTest) {
+    return;
+  }
+
+  const result = currentTest.trials.map( trial => trial.meta );
   res.status( 200 ).json( result );
   logger.verbose( 'OK' );
 });
@@ -181,6 +217,12 @@ app.get( '/trial/:id/stats', ( req, res ) => {
   provideStats( req.params.id, res );
 });
 
+app.get( '/stats/update', ( req, res ) => {
+  storage.update();
+  res.status( 200 ).json( { message: 'OK' });
+  logger.verbose( 'OK' );
+});
+
 
 // start
 if (!options.help) {
@@ -192,7 +234,11 @@ if (!options.help) {
 
 function provideTrack( id: string, data: string, res: express.Response ) {
 
-  const trial = trials.find( trial => trial._id === id );
+  if (!currentTest) {
+    return;
+  }
+
+  const trial = currentTest.trials.find( trial => trial._id === id );
 
   if ( trial ) {
     const obj = data ? (trial as any)[ data ] : trial;
@@ -208,10 +254,14 @@ function provideTrack( id: string, data: string, res: express.Response ) {
 
 function provideGazeData( id: string, data: string, res: express.Response ) {
 
-  const trial = trials.find( trial => trial._id === id );
+  if (!currentTest) {
+    return;
+  }
 
-  if (trial && trial.gaze) {
-    const obj = data ? (trial.gaze as any)[ data ] : trial.gaze;
+  const trial = currentTest.trials.find( trial => trial._id === id );
+
+  if (trial) {
+    const obj = data && trial.gaze ? (trial.gaze as any)[ data ] : trial.gaze;
 
     if (Array.isArray(obj)) {
       logger.verbose( `sending ${obj.length} items` );
@@ -228,30 +278,15 @@ function provideGazeData( id: string, data: string, res: express.Response ) {
 }
 
 function provideStats( id: string, res: express.Response) {
-  const trial = trials.find( trial => trial._id === id );
 
-  if ( trial && trial.gaze) {
-    const fixations = Transform.fixations(
-      trial.gaze.fixations,
-      trial.events,
-    );
+  if (!currentTest) {
+    return;
+  }
 
-    const saccades = Transform.saccades( trial.gaze.fixations );
+  const trial = currentTest.trials.find( trial => trial._id === id );
 
-    const obj = {
-      hits: Stats.hitsTimed( trial.hitsPerTenth ),
-      fixations: {
-        durationRanges: Stats.fixDurationsRange( fixations ),
-        durationTimes: Stats.fixDurationsTime( fixations ),
-      },
-      saccades: {
-        directions: Stats.saccadeDirections( saccades ),
-        directionsRadar: Stats.saccadeDirectionRadar( saccades ),
-        amplitudeRanges: Stats.saccadeAmplitudeRange( saccades ),
-        amplitudeTimes: Stats.saccadeAmplitudeTime( saccades ),
-      },
-    } as Statistics;
-
+  if ( trial ) {
+    const obj = calculateStatistics( trial );
     res.status( 200 ).json( obj );
     logger.verbose( 'OK' );
   }
@@ -262,32 +297,34 @@ function provideStats( id: string, res: express.Response) {
   }
 }
 
-function loadTrials() {
+function loadTrials( folder: string ): Error | Test  {
 
-  const webLogs = Folder.listFiles( testFolder, /(.*)\.txt/ );
+  const webLogs = Folder.listFiles( folder, /(.*)\.txt/ );
 
   if (!webLogs || webLogs.length === 0) {
-    return `no weblog files in the folder "${testFolder}"`;
+    return new Error( `no weblog files in the folder "${folder}"` );
   }
   if (webLogs.length > 1) {
-    return `invalid data: several weblogs found in "${testFolder}"`;
+    return new Error( `invalid data: several weblogs found in "${folder}"` );
   }
+
+  const test = new Test();
 
   try {
-    trials = Trials.readWebTxtLog( `${testFolder}/${webLogs[0]}` ) || [];
+    test.trials = Trials.readWebTxtLog( `${folder}/${webLogs[0]}` ) || [];
   }
   catch (ex) {
-    return `weblog file is corrupted: ${ex.message || ex}`;
+    return new Error( `weblog file is corrupted: ${ex.message || ex}` );
   }
 
-  if (trials.length === 0) {
-    return `weblog file is corrupted`;
+  if (test.trials.length === 0) {
+    return new Error( `weblog file is corrupted` );
   }
 
   // Hours manually added here to compensate difference between Tobii and Web log timestamps.
   // This may change in future
   const hourOffset = options['time-correction'];
-  trials.forEach( trial => {
+  test.trials.forEach( trial => {
     trial.timestamp.setHours( trial.timestamp.getHours() + hourOffset );
     trial.startTime.setHours( trial.startTime.getHours() + hourOffset );
     trial.endTime.setHours( trial.endTime.getHours() + hourOffset );
@@ -295,18 +332,18 @@ function loadTrials() {
     trial.headData.forEach( hd => hd.timestamp.setHours( hd.timestamp.getHours() + hourOffset ) );
   });
 
-  const tobiiLogFiles = Folder.listFiles( testFolder, /(.*)\.tsv/ );
+  const tobiiLogFiles = Folder.listFiles( folder, /(.*)\.tsv/ );
 
-  if (trials.length === tobiiLogFiles.length) {   // one Tobii log file per trial in web log
-    for (let i = 0; i < trials.length; i++) {
-      trials[i].gaze = Trials.readTobiiLog( `${testFolder}/${tobiiLogFiles[i]}` );
+  if (test.trials.length === tobiiLogFiles.length) {   // one Tobii log file per trial in web log
+    for (let i = 0; i < test.trials.length; i++) {
+      test.trials[i].gaze = Trials.readTobiiLog( `${folder}/${tobiiLogFiles[i]}` );
     }
   }
-  else if (trials[0].participantCode) {  // participant-based Tobii log file
+  else if (test.trials[0].participantCode) {  // participant-based Tobii log file
 
-    const tobiiLogs = tobiiLogFiles.map( tobiiLogFile => Trials.readTobiiLog( `${testFolder}/${tobiiLogFile}` ) );
+    const tobiiLogs = tobiiLogFiles.map( tobiiLogFile => Trials.readTobiiLog( `${folder}/${tobiiLogFile}` ) );
 
-    trials.forEach( trial => {
+    test.trials.forEach( trial => {
       let trialGaze = tobiiLogs.find( tobiiLog => 
         !!tobiiLog ? tobiiLog.general.ParticipantName === trial.participantCode : false );
 
@@ -324,16 +361,45 @@ function loadTrials() {
       }
 
       trial.gaze = trialGaze;
-                   
-
-      if (!trial.gaze) {
-        return `invalid data: no gaze data for participant ${trial.participantCode}`;
-      }
     });
   }
   else {
-    return `unsupported data structure`;
+    return new Error( `unsupported data structure` );
   }
+
+  const nogazeTrial = test.trials.find( trial => !trial.gaze);
+  if (nogazeTrial) {
+    return new Error( `invalid data: no gaze data for participant ${nogazeTrial.participantCode}` );
+  }
+
+  return test;
+}
+
+function calculateStatistics( trial: WebTrial ) {
+  if (!trial.gaze) {
+    return null;
+  }
+
+  const fixations = Transform.fixations(
+    trial.gaze.fixations,
+    trial.events,
+  );
+
+  const saccades = Transform.saccades( trial.gaze.fixations );
+
+  return {
+    hits: Stats.hitsTimed( trial.hitsPerTenth ),
+    fixations: {
+      durationRanges: Stats.fixDurationsRange( fixations ),
+      durationTimes: Stats.fixDurationsTime( fixations ),
+    },
+    saccades: {
+      directions: Stats.saccadeDirections( saccades ),
+      directionsRadar: Stats.saccadeDirectionRadar( saccades ),
+      amplitudeRanges: Stats.saccadeAmplitudeRange( saccades ),
+      amplitudeTimes: Stats.saccadeAmplitudeTime( saccades ),
+    },
+  } as Statistics;
 }
 
 export default app;
