@@ -41,7 +41,7 @@ storage.on( 'statistics', name => {
       }
     });
 
-    logger.verbose( '   done' );
+    logger.verbose( `Storage: "${folder}" statistics added` );
   }
   else {
     logger.error( error.message );
@@ -107,7 +107,7 @@ app.get( '/', ( req, res ) => {
         '/trial/:id/gaze/saccades': 'the trial saccades',
         '/trial/:id/gaze/gazeAways': 'the trial gazeAways',
         '/trial/:id/stats': 'the trial statistics',
-        '/trial/:id/stats/update': 'updates statistics when a new data folder was added',
+        '/stats/update': 'updates statistics when a new data folder was added',
       }
     }
   });
@@ -218,8 +218,8 @@ app.get( '/trial/:id/stats', ( req, res ) => {
 });
 
 app.get( '/stats/update', ( req, res ) => {
-  storage.update();
-  res.status( 200 ).json( { message: 'OK' });
+  const report = storage.update();
+  res.status( 200 ).json( { message: report });
   logger.verbose( 'OK' );
 });
 
@@ -336,16 +336,16 @@ function loadTrials( folder: string ): Error | Test  {
 
   if (test.trials.length === tobiiLogFiles.length) {   // one Tobii log file per trial in web log
     for (let i = 0; i < test.trials.length; i++) {
-      test.trials[i].gaze = Trials.readTobiiLog( `${folder}/${tobiiLogFiles[i]}` );
+      test.trials[i].gaze = Trials.readTobiiLog( `${folder}/${tobiiLogFiles[i]}` )[0];
     }
   }
   else if (test.trials[0].participantCode) {  // participant-based Tobii log file
 
-    const tobiiLogs = tobiiLogFiles.map( tobiiLogFile => Trials.readTobiiLog( `${folder}/${tobiiLogFile}` ) );
+    const tobiiLogs = tobiiLogFiles.flatMap( tobiiLogFile => Trials.readTobiiLog( `${folder}/${tobiiLogFile}` ) );
 
     test.trials.forEach( trial => {
       let trialGaze = tobiiLogs.find( tobiiLog => 
-        !!tobiiLog ? tobiiLog.general.ParticipantName === trial.participantCode : false );
+        tobiiLog.general ? tobiiLog.general.ParticipantName === trial.participantCode : false );
 
       if (!trialGaze) {
         return;

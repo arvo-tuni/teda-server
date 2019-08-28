@@ -7,7 +7,6 @@ import Folder from './folder';
 import { Data as Statistics } from './statistics/types';
 
 const db = new JsonDB( new Config( 'arvo', true, false, '/' ) );
-
 db.load();
 
 interface NamedTests {
@@ -37,8 +36,16 @@ export default class Storage extends EventEmitter {
 
   update() {
     const folders = Folder.subfolders( this.rootFolder );
-    this.statistics = this.removeDeleted( this.statistics, folders );
-    this.statistics = this.appendMissing( this.statistics, folders );
+
+    const removed = this.removeDeleted( this.statistics, folders );
+    const appended = this.appendMissing( this.statistics, folders );
+
+    db.save();
+
+    return {
+      removed,
+      appended,
+    };
   }
 
   private removeDeleted( all: NamedTests, toLeave: string[] ) {
@@ -47,7 +54,7 @@ export default class Storage extends EventEmitter {
   
     toRemove.forEach( name => delete all[ name ] );
   
-    return all;
+    return toRemove.length;
   }
   
   private appendMissing( current: NamedTests, all: string[] ) {
@@ -57,9 +64,7 @@ export default class Storage extends EventEmitter {
     missing.forEach( name => {
       this.emit( 'statistics', name );
     });
-
-    db.save();
   
-    return current;
+    return missing.length;
   }
 }

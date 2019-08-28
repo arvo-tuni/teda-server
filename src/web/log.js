@@ -141,6 +141,56 @@ export class TestEventVeroUI extends TestEvent {
   }
 }
 
+export class TestEventDrawing extends TestEvent {
+  constructor() {
+    super();
+
+    this.type = 'drawing';
+
+    /** @type {String} */
+    this.kind = String;
+  }
+}
+
+export class TestEventDrawingCross extends TestEventDrawing {
+  constructor() {
+    super();
+
+    this.kind = 'cross';
+
+    /** @type {number} */
+    this.x = Number;
+    /** @type {number} */
+    this.y = Number;
+  }
+}
+
+export class TestEventDrawingSphere extends TestEventDrawing {
+  constructor() {
+    super();
+
+    this.kind = 'sphere';
+
+    /** @type {number} */
+    this.diameter = Number;
+    /** @type {number} */
+    this.x = Number;
+    /** @type {number} */
+    this.y = Number;
+  }
+}
+
+export class TestEventInstruction extends TestEvent {
+  constructor() {
+    super();
+
+    this.type = 'instruction';
+
+    /** @type {String[]} */
+    this.content = [String];
+  }
+}
+
 export class Vector3 {
   constructor() {
     /** @type {Number} */
@@ -260,6 +310,10 @@ export class Schema {
       TestEventVeroNav,
       TestEventVeroNavData,
       TestEventVeroUI,
+      TestEventInstruction,
+      TestEventDrawingSphere,
+      TestEventDrawingCross,
+      TestEventDrawing,
     ];
     /** @type {HeadData[]} */
     this.headData = [ HeadData ];

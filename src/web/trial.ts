@@ -33,9 +33,9 @@ export default class Trial extends WebLog.Schema {
   get meta(): TrialMeta {
     return {
       _id: this._id,
-      participant: this.participantCode,
+      participant: this.participantCode || (this.gaze && this.gaze.general ? this.gaze.general.ParticipantName : '' ),
       timestamp: this.timestamp,
-      type: this.resultWord,
+      type: this.resultWord || (this.gaze && this.gaze.general ? this.gaze.general.RecordingName : '' ),
     };
   }
 
@@ -59,7 +59,7 @@ export default class Trial extends WebLog.Schema {
       }
 
       if (k === 'resultWord') {
-        result['type'] = this[k];
+        result['type'] = this[k] || (this.gaze && this.gaze.general ? this.gaze.general.RecordingName : '' );
       }
       else {
         result[k] = this[k];

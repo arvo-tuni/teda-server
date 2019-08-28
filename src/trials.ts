@@ -34,7 +34,7 @@ export class Trials {
         if (ext === 'tsv') {
           const tobiiTrial = Trials.readTobiiLog( filename );
           if (tobiiTrial) {
-            this.tobiiTrials.push( tobiiTrial );
+            this.tobiiTrials.push( ...tobiiTrial );
           }
         }
         else {
@@ -72,25 +72,32 @@ export class Trials {
     });
   }
 
-  static readTobiiLog( filename: string ): TobiiTrial | null {
+  static readTobiiLog( filename: string ) {
 
-    let trial: TobiiTrial | null = null;
+    const trials: TobiiTrial[] = [];
 
     logger.verbose( `reading Tobii log "${filename}"` );
 
+    let trial: TobiiTrial | null = null;
     Trials._read<TobiiTrial>( filename, row => {
 
       if (!trial) {    // the first log line contains a header
         trial = new TobiiTrial( row.split( '\t' ) );
+        trials.push( trial );
       }
       else {
-        trial.add( row.split( '\t' ) );
+        const values = row.split( '\t' );
+        if (trial.add( values ) === 0) {  // another participant
+          trial = trial.fromExisting();
+          trials.push( trial );
+          trial.add( values );
+        }
       }
 
       return null;
     });
 
-    return trial;
+    return trials;
   }
 
   static _read<T>( filename: string, cb: Callback<T> ): T[] {
