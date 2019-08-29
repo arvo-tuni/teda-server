@@ -68,3 +68,23 @@ export const TYPES = {
   studio:   new EventType( 'Studio', Studio ),
   external: new EventType( 'External', External ),
 };
+
+export class Stimuli {
+
+  timestamp: Tobii.Timestamp;
+  media: Tobii.Media;
+  scene: Tobii.Scene;
+  segment: Tobii.Segment;
+
+  constructor( 
+    timestamp: Tobii.Timestamp,
+    media: Tobii.Media,
+    scene: Tobii.Scene,
+    segment: Tobii.Segment,
+  ) {
+    this.timestamp = timestamp;
+    this.media = media;
+    this.scene = scene;
+    this.segment = segment;
+  }
+}

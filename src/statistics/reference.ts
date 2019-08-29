@@ -100,7 +100,7 @@ export function means( trialId: string, trialType: string ) {
   return result;
 }
 
-function addArray( dest: number[] | null, src: number[] | null ) {
+function addArray( dest: number[] | null, src: number[] | null | undefined ) {
   if (!dest || !src) {
     return null;
   }

@@ -1,8 +1,6 @@
 import * as Tobii from './log';
 import * as TrialEvents from './trial-events';
 import * as GazeEvent from './gaze-event';
-import Sample from './sample';
-import Stimuli from './stimuli';
 import { copyValue } from '../utils';
 
 /**
@@ -43,9 +41,9 @@ export default class Trial {
   _headers: string[];
   _gazeEvents: GazeEvent.Base[] = [];
   general: Tobii.General | null = null;
-  samples: Sample[] = [];
+  samples: GazeEvent.Sample[] = [];
   events: Events = new Events();
-  stimuli: Stimuli[] = [];
+  stimuli: TrialEvents.Stimuli[] = [];
   
   constructor( headers: string[] ) {
     this._headers = headers.map( header => header.replace( /[\s()]/g, '') );
@@ -137,13 +135,13 @@ export default class Trial {
 
       if (timestamp.EyeTrackerTimestamp) {
 
-        const sample = new Sample( timestamp );
-
-        sample.gaze = this._create( 'Gaze', values ) as Tobii.Gaze;
-        sample.event = this._create( 'GazeEvent', values ) as Tobii.GazeEvent;
-        sample.eyePos = this._create( 'EyePos', values ) as Tobii.EyePos;
-        sample.eye = this._create( 'Eye', values ) as Tobii.Eye;
-        sample.cam = this._create( 'Cam', values ) as Tobii.Cam;
+        const sample = new GazeEvent.Sample( timestamp,
+          this._create( 'Gaze', values ) as Tobii.Gaze,
+          this._create( 'GazeEvent', values ) as Tobii.GazeEvent,
+          this._create( 'EyePos', values ) as Tobii.EyePos,
+          this._create( 'Eye', values ) as Tobii.Eye,
+          this._create( 'Cam', values ) as Tobii.Cam,
+        );
 
         this.samples.push( sample );
       }
@@ -158,10 +156,11 @@ export default class Trial {
         });
 
         if (eventType && eventType === 'studio' && this.events.studio.slice(-1)[0].StudioEvent === 'ScreenRecStarted' ) {
-          const stimuli = new Stimuli( timestamp );
-          stimuli.media = this._create( 'Media', values ) as Tobii.Media;
-          stimuli.scene = this._create( 'Scene', values ) as Tobii.Scene;
-          stimuli.segment = this._create( 'Segment', values ) as Tobii.Segment;
+          const stimuli = new TrialEvents.Stimuli( timestamp,
+            this._create( 'Media', values ) as Tobii.Media,
+            this._create( 'Scene', values ) as Tobii.Scene,
+            this._create( 'Segment', values ) as Tobii.Segment,
+          );
 
           this.stimuli.push( stimuli );
         }

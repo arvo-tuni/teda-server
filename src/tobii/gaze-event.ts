@@ -1,5 +1,30 @@
 import * as Tobii from './log';
-import Sample from './sample';
+
+export class Sample {
+
+  timestamp: Tobii.Timestamp;
+  gaze: Tobii.Gaze;
+  event: Tobii.GazeEvent;
+  eyePos: Tobii.EyePos;
+  eye: Tobii.Eye;
+  cam: Tobii.Cam;
+
+  constructor(
+    timestamp: Tobii.Timestamp,
+    gaze: Tobii.Gaze,
+    event: Tobii.GazeEvent,
+    eyePos: Tobii.EyePos,
+    eye: Tobii.Eye,
+    cam: Tobii.Cam,
+  ) {
+    this.timestamp = timestamp;
+    this.gaze = gaze;
+    this.event = event;
+    this.eyePos = eyePos;
+    this.eye = eye;
+    this.cam = cam;
+  }
+}
 
 export class Base {
 
