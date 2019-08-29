@@ -1,10 +1,61 @@
 import * as WebLog from '../web/log';
+import WebTrial from '../web/trial';
 import { Timestamp } from '../tobii/log';
+import logger from '../logger';
 
 import * as Types from './types';
 import * as Params from './params';
+import * as Transform from './transform';
+import * as Reference from './reference';
 
-export function hitsTimed( data: WebLog.WrongAndCorrect[] & number[] ) {
+export function calculate( trial: WebTrial ) {
+  if (!trial.gaze) {
+    return null;
+  }
+
+  const fixations = Transform.fixations(
+    trial.gaze.fixations,
+    trial.events,
+  );
+
+  const saccades = Transform.saccades( trial.gaze.fixations );
+
+  return {
+    type: trial.metaExt.type,
+    hits: hitsTimed( trial.hitsPerTenth ),
+    fixations: {
+      durationRanges: fixDurationsRange( fixations ),
+      durationTimes: fixDurationsTime( fixations ),
+    },
+    saccades: {
+      directions: saccadeDirections( saccades ),
+      directionsRadar: saccadeDirectionRadar( saccades ),
+      amplitudeRanges: saccadeAmplitudeRange( saccades ),
+      amplitudeTimes: saccadeAmplitudeTime( saccades ),
+    },
+  } as Types.Data;
+}
+
+export function reference( trial: WebTrial ) {
+
+  const ref = {
+    means: undefined,
+    medians: undefined,
+    upperQuantile: undefined,
+    lowerQuantile: undefined,
+  } as Types.Reference;
+
+  try {
+    ref.means = Reference.means( trial._id, trial.metaExt.type );
+  }
+  catch (err) {
+    logger.error( err );
+  }
+
+  return ref;
+}
+
+function hitsTimed( data: WebLog.WrongAndCorrect[] & number[] ) {
   if (data.length > 0 && data[0].wrong === undefined ) {
     return {
       correct: (data as number[]),
@@ -19,7 +70,7 @@ export function hitsTimed( data: WebLog.WrongAndCorrect[] & number[] ) {
   }
 }
 
-export function fixDurationsRange( fixations: Types.Fixation[] ) {
+function fixDurationsRange( fixations: Types.Fixation[] ) {
 
   const data = Params.FIXATION_DURATION_RANGES.map( () => 0 );
 
@@ -31,7 +82,7 @@ export function fixDurationsRange( fixations: Types.Fixation[] ) {
   return data;
 }
 
-export function fixDurationsTime( fixations: Types.Fixation[] ) {
+function fixDurationsTime( fixations: Types.Fixation[] ) {
   return makeTempRange<number, Types.Fixation>(
     Params.TIME_RANGE_INTERVAL,
     fixations,
@@ -47,7 +98,7 @@ interface DirectionData {
   other: number;
 }
 
-export function saccadeDirections( saccades: Types.Saccade[] ) {
+function saccadeDirections( saccades: Types.Saccade[] ) {
 
   const { values, itemDuration } = makeTempRange<DirectionData, Types.Saccade>(
     Params.TIME_RANGE_INTERVAL,
@@ -86,7 +137,7 @@ interface AngleData {
   value: number,
 }
 
-export function saccadeDirectionRadar( saccades: Types.Saccade[] ) {
+function saccadeDirectionRadar( saccades: Types.Saccade[] ) {
 
   const data: AngleData[] = [];
   
@@ -113,7 +164,7 @@ export function saccadeDirectionRadar( saccades: Types.Saccade[] ) {
   return result;
 }
 
-export function saccadeAmplitudeRange( saccades: Types.Saccade[] ) {
+function saccadeAmplitudeRange( saccades: Types.Saccade[] ) {
   const forward = Params.SACCADE_AMPLITUDE_RANGES.map( () => 0 );
   const backward = Params.SACCADE_AMPLITUDE_RANGES.map( () => 0 );
 
@@ -133,7 +184,7 @@ export function saccadeAmplitudeRange( saccades: Types.Saccade[] ) {
   } as Types.Directions;
 }
 
-export function saccadeAmplitudeTime( saccades: Types.Saccade[] ) {
+function saccadeAmplitudeTime( saccades: Types.Saccade[] ) {
   return makeTempRange<number, Types.Saccade>(
     Params.TIME_RANGE_INTERVAL,
     saccades,
@@ -143,31 +194,30 @@ export function saccadeAmplitudeTime( saccades: Types.Saccade[] ) {
   );
 }
 
-
 type Callback<T, U> = (items: U[]) => T;
 
 function getTimeParams<T extends {timestamp: Timestamp}>(
-  rangeDuration: number,
+  optimalItemDuration: number,
   timestamped: T[]) {
 
   const end = timestamped.slice( -1 )[0].timestamp.EyeTrackerTimestamp;
   const start = timestamped[0].timestamp.EyeTrackerTimestamp;
   const duration = end - start;
-  const rangeCount = Math.round( duration / (rangeDuration * 1000000) );
-  const rangeItemDuration = (end - start) / rangeCount + 1;
+  const itemCount = Math.round( duration / (optimalItemDuration * 1000000) );
+  const itemDuration = (end - start) / itemCount + 1;
 
   return {
     start,
-    itemDuration: rangeItemDuration,
+    itemDuration,
   };
 }
 
 function makeTempRange<T, U extends {timestamp: Timestamp}>(
-  rangeDuration: number,  // seconds
+  optimalItemDuration: number,  // seconds
   timestamped: U[],
   cb: Callback<T, U> ): Types.Histogram<T> {
 
-  const { start, itemDuration } = getTimeParams( rangeDuration, timestamped );
+  const { start, itemDuration } = getTimeParams( optimalItemDuration, timestamped );
 
   const values: T[] = [];
 

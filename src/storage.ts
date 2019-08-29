@@ -6,7 +6,9 @@ import options from './options';
 import Folder from './folder';
 import { Data as Statistics } from './statistics/types';
 
-const db = new JsonDB( new Config( 'arvo', true, false, '/' ) );
+import logger from './logger';
+
+const db = new JsonDB( new Config( 'arvo', true, true, '/' ) );
 db.load();
 
 interface NamedTests {
@@ -17,17 +19,24 @@ interface NamedTrials {
   [x: string]: Statistics;
 }
 
+let singleton: Storage | null = null;
+
 /// Emits
 ///   statistics( name )
 export default class Storage extends EventEmitter {
   
-  private statistics: NamedTests = {};
   private rootFolder = options['data-folder'];
 
-  constructor() {
+  protected constructor() {
     super();
+  }
 
-    this.statistics = db.getData( '/' ) as NamedTests;
+  static create() {
+    if (!singleton) {
+      singleton = new Storage();
+    }
+
+    return singleton;
   }
 
   append( test: string, trial: string, statistics: Statistics ) {
@@ -37,8 +46,10 @@ export default class Storage extends EventEmitter {
   update() {
     const folders = Folder.subfolders( this.rootFolder );
 
-    const removed = this.removeDeleted( this.statistics, folders );
-    const appended = this.appendMissing( this.statistics, folders );
+    const statistics = db.getData( '/' ) as NamedTests;
+
+    const removed = this.removeDeleted( statistics, folders );
+    const appended = this.appendMissing( statistics, folders );
 
     db.save();
 
@@ -46,6 +57,19 @@ export default class Storage extends EventEmitter {
       removed,
       appended,
     };
+  }
+
+  getTrialsOfType( type: string, exeptionTrialId: string ) {
+    const statistics = db.getData( '/' ) as NamedTests;
+    return Object.keys( statistics ).flatMap( testName => {
+      const test = statistics[ testName ];
+      return Object.keys( test )
+        .filter( trialId => {
+          const trial = test[ trialId ] as Statistics;
+          return trial.type === type && trialId !== exeptionTrialId;
+        })
+        .map( trialId => test[ trialId ] as Statistics );
+    });
   }
 
   private removeDeleted( all: NamedTests, toLeave: string[] ) {
@@ -62,8 +86,9 @@ export default class Storage extends EventEmitter {
     const missing = all.filter( name => !current[ name ] );
   
     missing.forEach( name => {
+      logger.verbose( `Storage: appending statistics for "${name}" ...` );
       this.emit( 'statistics', name );
-    });
+     });
   
     return missing.length;
   }

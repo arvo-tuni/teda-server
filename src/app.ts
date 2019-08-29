@@ -1,5 +1,5 @@
 import express from 'express';
-import fs from 'fs';
+import fs, { Stats } from 'fs';
 import cors from 'cors';
 
 import options from './options';
@@ -8,9 +8,8 @@ import Folder from './folder';
 import { Trials } from './trials';
 import WebTrial from './web/trial';
 
-import * as Stats from './statistics/statistics';
-import { Data as Statistics } from './statistics/types';
-import * as Transform from './statistics/transform';
+import * as Statistics from './statistics/statistics';
+import { ReferencedData as StatData } from './statistics/types';
 
 import logger from './logger';
 
@@ -23,26 +22,22 @@ let currentTest: Test | null = null;
 
 const folders = Folder.subfolders( options['data-folder'] );
 
-const storage = new Storage();
+const storage = Storage.create();
 storage.on( 'statistics', name => {
 
   const folder = `${options['data-folder']}/${name}`;
-  logger.verbose( `Storage: appending statistics for "${folder}" ...` );
-
   const result = loadTrials( folder );
   const error = result as Error;
 
   if (!error || !error.message) {
     const test = result as Test;
     test.trials.forEach( trial => {
-      const statistics = calculateStatistics( trial );
+      const statistics = Statistics.calculate( trial );
       if (statistics) {
         storage.append( name, trial._id, statistics );
       }
     });
-
-    logger.verbose( `Storage: "${folder}" statistics added` );
-  }
+ }
   else {
     logger.error( error.message );
   }
@@ -286,7 +281,10 @@ function provideStats( id: string, res: express.Response) {
   const trial = currentTest.trials.find( trial => trial._id === id );
 
   if ( trial ) {
-    const obj = calculateStatistics( trial );
+    const obj = {
+      data: Statistics.calculate( trial ),
+      reference: Statistics.reference( trial ),
+    } as StatData;
     res.status( 200 ).json( obj );
     logger.verbose( 'OK' );
   }
@@ -373,33 +371,6 @@ function loadTrials( folder: string ): Error | Test  {
   }
 
   return test;
-}
-
-function calculateStatistics( trial: WebTrial ) {
-  if (!trial.gaze) {
-    return null;
-  }
-
-  const fixations = Transform.fixations(
-    trial.gaze.fixations,
-    trial.events,
-  );
-
-  const saccades = Transform.saccades( trial.gaze.fixations );
-
-  return {
-    hits: Stats.hitsTimed( trial.hitsPerTenth ),
-    fixations: {
-      durationRanges: Stats.fixDurationsRange( fixations ),
-      durationTimes: Stats.fixDurationsTime( fixations ),
-    },
-    saccades: {
-      directions: Stats.saccadeDirections( saccades ),
-      directionsRadar: Stats.saccadeDirectionRadar( saccades ),
-      amplitudeRanges: Stats.saccadeAmplitudeRange( saccades ),
-      amplitudeTimes: Stats.saccadeAmplitudeTime( saccades ),
-    },
-  } as Statistics;
 }
 
 export default app;

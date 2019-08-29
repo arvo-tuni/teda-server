@@ -62,7 +62,6 @@ export class Trials {
         const [ key, value ] = row.split( ': ' );
         if (key === 'timestamp') {
           lastTimestamp = new Date( value );
-          logger.verbose( `timestamp "${lastTimestamp}"` );
         }
         else if (row) {
           logger.warn( `unsupported line "${row}"` );

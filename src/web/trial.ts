@@ -42,7 +42,7 @@ export default class Trial extends WebLog.Schema {
   get metaExt(): TrialMetaExt {
 
     const result: any = {
-        rate: this.marks / this.clickables.length
+        rate: this.clickables.length ? this.marks / this.clickables.length : 0,
     };
 
     for (let k in this) {
@@ -58,8 +58,30 @@ export default class Trial extends WebLog.Schema {
         continue;
       }
 
+      // if (k == 'contentArea') {
+      //   result.contentArea = {
+      //     left: 0,
+      //     top: 0,
+      //     width: this.windowWidth,
+      //     height: this.windowHeight
+      //   } as WebLog.ContentArea;
+      // }
+      // else 
       if (k === 'resultWord') {
-        result['type'] = this[k] || (this.gaze && this.gaze.general ? this.gaze.general.RecordingName : '' );
+        let type = (this as any)[k] as string;
+        if (type) {
+          result['type'] = type;
+        }
+        else {
+          const buildingEvent = this.events.find( e => e.type === 'building');
+          if (buildingEvent) {
+            type = (buildingEvent as WebLog.TestEventBuild).test;
+          }
+          else if (this.gaze && this.gaze.general) {
+            type = this.gaze.general.RecordingName
+          }
+          result['type'] = type;
+        }
       }
       else {
         result[k] = this[k];

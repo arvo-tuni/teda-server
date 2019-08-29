@@ -1,6 +1,7 @@
 import { Timestamp } from '../tobii/log';
 
 export interface Data {
+  type: string,
   hits: Hits,
   fixations: {
     durationRanges: number[],
@@ -12,6 +13,18 @@ export interface Data {
     amplitudeRanges: Directions,
     amplitudeTimes: Histogram<number>,
   },
+}
+
+export interface Reference {
+  means?: Data;
+  medians?: Data;
+  upperQuantile?: Data;
+  lowerQuantile?: Data;
+}
+
+export interface ReferencedData {
+  data: Data;
+  reference: Reference;
 }
 
 export type Histogram<T> = {
