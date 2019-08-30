@@ -4,6 +4,7 @@ import EventEmitter from 'events';
 
 import options from './options';
 import Folder from './folder';
+import { UpdateInfo } from './respTypes';
 import { Data as Statistics } from './statistics/types';
 
 import logger from './logger';
@@ -56,7 +57,7 @@ export default class Storage extends EventEmitter {
     return {
       removed,
       appended,
-    };
+    } as UpdateInfo;
   }
 
   getTrialsOfType( type: string, exeptionTrialId: string ) {

@@ -58,15 +58,6 @@ export default class Trial extends WebLog.Schema {
         continue;
       }
 
-      // if (k == 'contentArea') {
-      //   result.contentArea = {
-      //     left: 0,
-      //     top: 0,
-      //     width: this.windowWidth,
-      //     height: this.windowHeight
-      //   } as WebLog.ContentArea;
-      // }
-      // else 
       if (k === 'resultWord') {
         let type = (this as any)[k] as string;
         if (type) {

@@ -20,7 +20,7 @@ class Test {
 
 let currentTest: Test | null = null;
 
-const folders = Folder.subfolders( options['data-folder'] );
+let folders = Folder.subfolders( options['data-folder'] );
 
 const storage = Storage.create();
 storage.on( 'statistics', name => {
@@ -212,9 +212,11 @@ app.get( '/trial/:id/stats', ( req, res ) => {
   provideStats( req.params.id, res );
 });
 
-app.get( '/stats/update', ( req, res ) => {
+app.get( '/update', ( req, res ) => {
+  folders = Folder.subfolders( options['data-folder'] );
+
   const report = storage.update();
-  res.status( 200 ).json( { message: report });
+  res.status( 200 ).json( report );
   logger.verbose( 'OK' );
 });
 

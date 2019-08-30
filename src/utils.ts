@@ -20,7 +20,7 @@ function estimateType( types: any[], src: any ): any {
     });
 
     if (typeIndex < 0) {
-      throw new Error( `Unknown data type in the array: "${JSON.stringify(src)}"` );
+      throw new Error( `Unknown data type in the array: "${JSON.stringify( src )}"` );
     }
 
     return types[ typeIndex ];
