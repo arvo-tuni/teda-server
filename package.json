@@ -7,6 +7,7 @@
     "build": "tsc",
     "serve": "ts-node-dev --respawn --transpileOnly ./src/app.ts -- -d ../data",
     "start": "node -r esm ./build/app.js",
+    "lint": "tslint -c tslint.json 'src/**/*.ts'",
     "test": "node -r esm ./tests/index.js"
   },
   "author": "Oleg Spakov",
@@ -26,6 +27,7 @@
     "winston": "^3.2.1"
   },
   "devDependencies": {
-    "esm": "^3.2.25"
+    "esm": "^3.2.25",
+    "tslint": "^5.20.0"
   }
 }

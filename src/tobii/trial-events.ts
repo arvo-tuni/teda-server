@@ -1,5 +1,7 @@
 import * as Tobii from './log';
 
+type EventConstructor = new ( timestamp: Tobii.Timestamp, source: Tobii.Mouse ) => any;
+
 export class Mouse extends Tobii.Mouse {
 
   timestamp: Tobii.Timestamp;
@@ -9,7 +11,7 @@ export class Mouse extends Tobii.Mouse {
 
     this.timestamp = timestamp;
 
-    Object.keys( source).forEach( key => (this as any)[ key ] = (source as any)[ key ] );
+    Object.keys( source ).forEach( key => (this as any)[ key ] = (source as any)[ key ] );
   }
 }
 
@@ -22,7 +24,7 @@ export class Keyboard extends Tobii.KeyPress {
 
     this.timestamp = timestamp;
 
-    Object.keys( source).forEach( key => (this as any)[ key ] = (source as any)[ key ] );
+    Object.keys( source ).forEach( key => (this as any)[ key ] = (source as any)[ key ] );
   }
 }
 
@@ -35,7 +37,7 @@ export class Studio extends Tobii.Studio {
 
     this.timestamp = timestamp;
 
-    Object.keys( source).forEach( key => (this as any)[ key ] = (source as any)[ key ] );
+    Object.keys( source ).forEach( key => (this as any)[ key ] = (source as any)[ key ] );
   }
 }
 
@@ -48,15 +50,15 @@ export class External extends Tobii.External {
 
     this.timestamp = timestamp;
 
-    Object.keys( source).forEach( key => (this as any)[ key ] = (source as any)[ key ] );
+    Object.keys( source ).forEach( key => (this as any)[ key ] = (source as any)[ key ] );
   }
 }
 
 export class EventType {
   log: string;
-  cls: Function;
+  cls: EventConstructor;
 
-  constructor( log: string, cls: Function ) {
+  constructor( log: string, cls: EventConstructor ) {
     this.log = log;
     this.cls = cls;
   }
@@ -76,7 +78,7 @@ export class Stimuli {
   scene: Tobii.Scene;
   segment: Tobii.Segment;
 
-  constructor( 
+  constructor(
     timestamp: Tobii.Timestamp,
     media: Tobii.Media,
     scene: Tobii.Scene,

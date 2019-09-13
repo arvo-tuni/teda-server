@@ -8,18 +8,15 @@ import { copy, clearUnused } from '../utils';
 
 export default class Trial extends WebLog.Schema {
 
+  // tslint:disable-next-line
   public _id: string;
   public timestamp: Date;
   public gaze: TobiiTrial | null = null;    // to be assigned externally
 
-  /**
-   * @param {Date} timestamp 
-   * @param {any} json
-   */
   constructor( timestamp: Date, json: any ) {
 
     super();
-    
+
     const hash = crypto.createHash( 'sha256' );
     hash.update( timestamp.toString() );
 
@@ -42,13 +39,13 @@ export default class Trial extends WebLog.Schema {
 
   get metaExt(): TrialMetaExt {
 
-    const result: any = {
+    const result: { [k: string]: any; } = {
         rate: this.clickables.length ? this.marks / this.clickables.length : 0,
     };
 
-    for (let k in this) {
+    for (const k in this) {
 
-      if (k === 'hitsPerTenth' || 
+      if (k === 'hitsPerTenth' ||
           k === 'clickables' ||
           k === 'marked' ||
           k === 'markedWrong' ||
@@ -62,7 +59,7 @@ export default class Trial extends WebLog.Schema {
       if (k === 'resultWord') {
         let type = (this as any)[k] as string;
         if (type) {
-          result['type'] = type;
+          result.type = type;
         }
         else {
           const buildingEvent = this.events.find( e => e.type === 'building');
@@ -70,9 +67,9 @@ export default class Trial extends WebLog.Schema {
             type = (buildingEvent as WebLog.TestEventBuild).test;
           }
           else if (this.gaze && this.gaze.general) {
-            type = this.gaze.general.RecordingName
+            type = this.gaze.general.RecordingName;
           }
-          result['type'] = type;
+          result.type = type;
         }
       }
       else {
@@ -80,6 +77,6 @@ export default class Trial extends WebLog.Schema {
       }
     }
 
-    return result;
+    return result as TrialMetaExt;
   }
 }

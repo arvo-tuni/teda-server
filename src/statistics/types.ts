@@ -1,19 +1,19 @@
 import { Timestamp } from '../tobii/log';
 
 export interface Data {
-  type: string,
-  group: string,
-  hits: Hits,
+  type: string;
+  group: string;
+  hits: Hits;
   fixations: {
-    durationRanges: number[],
-    durationTimes: Histogram<number>,
-  },
+    durationRanges: number[];
+    durationTimes: Histogram<number>;
+  };
   saccades: {
-    directions: Directions,
-    directionsRadar: Angles,
-    amplitudeRanges: Directions,
-    amplitudeTimes: Histogram<number>,
-  },
+    directions: Directions;
+    directionsRadar: Angles;
+    amplitudeRanges: Directions;
+    amplitudeTimes: Histogram<number>;
+  };
 }
 
 export interface Reference {
@@ -28,10 +28,10 @@ export interface ReferencedData {
   reference: Reference;
 }
 
-export type Histogram<T> = {
-  values: T[], 
-  itemDuration: number,
-};
+export interface Histogram<T> {
+  values: T[];
+  itemDuration: number;
+}
 
 export interface Directions {
   forward: number[];

@@ -51,40 +51,40 @@ export function means( trialId: string, trialType: string, userGroup: string ) {
       },
     },
   } as Types.Data;
-  
+
   const r = result as any;
 
   allStatistics.forEach( stats => {
-    r.hits.correct = addArray( 
-      r.hits.correct, stats.hits.correct
+    r.hits.correct = addArray(
+      r.hits.correct, stats.hits.correct,
     );
-    r.hits.wrong = addArray( 
-      r.hits.wrong, stats.hits.wrong
+    r.hits.wrong = addArray(
+      r.hits.wrong, stats.hits.wrong,
     );
     r.fixations.durationRanges = addArray(
-      r.fixations.durationRanges, stats.fixations.durationRanges
+      r.fixations.durationRanges, stats.fixations.durationRanges,
     );
-    r.fixations.durationTimes.values = addArray( 
-      r.fixations.durationTimes.values, stats.fixations.durationTimes.values
+    r.fixations.durationTimes.values = addArray(
+      r.fixations.durationTimes.values, stats.fixations.durationTimes.values,
     );
-    r.saccades.directions.forward = addArray( 
-      r.saccades.directions.forward, stats.saccades.directions.forward 
+    r.saccades.directions.forward = addArray(
+      r.saccades.directions.forward, stats.saccades.directions.forward,
     );
-    r.saccades.directions.backward = addArray( 
-      r.saccades.directions.backward, stats.saccades.directions.backward
+    r.saccades.directions.backward = addArray(
+      r.saccades.directions.backward, stats.saccades.directions.backward,
     );
     r.saccades.directions.other = addArray(
-      r.saccades.directions.other, stats.saccades.directions.other
+      r.saccades.directions.other, stats.saccades.directions.other,
     );
     addObject( r.saccades.directionsRadar, stats.saccades.directionsRadar );
     r.saccades.amplitudeRanges.forward = addArray(
-      r.saccades.amplitudeRanges.forward, stats.saccades.amplitudeRanges.forward
+      r.saccades.amplitudeRanges.forward, stats.saccades.amplitudeRanges.forward,
     );
     r.saccades.amplitudeRanges.backward = addArray(
-      r.saccades.amplitudeRanges.backward, stats.saccades.amplitudeRanges.backward
+      r.saccades.amplitudeRanges.backward, stats.saccades.amplitudeRanges.backward,
     );
     r.saccades.amplitudeTimes.values = addArray(
-      r.saccades.amplitudeTimes.values, stats.saccades.amplitudeTimes.values
+      r.saccades.amplitudeTimes.values, stats.saccades.amplitudeTimes.values,
     );
   });
 

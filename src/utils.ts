@@ -28,14 +28,12 @@ function estimateType( types: any[], src: any ): any {
 
 }
 
-//let indent = 0;
 /**
  * Deep copy according to schema
  */
 export function copy( src: any, dest: any, types?: any[] ) {
 
   Object.keys( src ).forEach( k => {
-//console.log(' '.repeat(indent), k); indent += 2;
 
     let type = dest[k];
 
@@ -61,9 +59,9 @@ export function copy( src: any, dest: any, types?: any[] ) {
         throw new Error( `Array is expected for "${k}"` );
       }
 
-      const types = dest[k];
+      const t = dest[k];
       dest[k] = [];
-      copy( src[k], dest[k], types );
+      copy( src[k], dest[k], t );
     }
     else if (typeof type === 'function') {
       dest[k] = new type();
@@ -72,8 +70,6 @@ export function copy( src: any, dest: any, types?: any[] ) {
     else {      // fixed value
       dest[k] = src[k];
     }
-//indent -= 2;
-
   });
 }
 

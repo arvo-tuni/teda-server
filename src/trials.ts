@@ -10,43 +10,6 @@ type Callback<T> = (arg: string) => T | null;
 
 export class Trials {
 
-  public webTrials: WebTrial[] = [];
-  public tobiiTrials: TobiiTrial[] = [];
-
-  constructor( source: string ) {
-
-    let filenames = [ source ];
-
-    const sourceStats = fs.statSync( source );
-    if (sourceStats.isDirectory()) {
-
-      filenames = Folder.listFiles( source );
-    }
-
-    filenames.forEach( filename => {
-      const ext = filename.split('.').reduce( (r, v) => v, filename );
-
-      try {
-        if (ext === 'txt') {
-          const webTrials = Trials.readWebTxtLog( filename );
-          this.webTrials = this.webTrials.concat( webTrials );
-        }
-        if (ext === 'tsv') {
-          const tobiiTrial = Trials.readTobiiLog( filename );
-          if (tobiiTrial) {
-            this.tobiiTrials.push( ...tobiiTrial );
-          }
-        }
-        else {
-          throw new Error( 'handling other files is not implemented yet' );
-        }
-      }
-      catch (ex) {
-        console.error( ex );
-      }
-    });
-  }
-
   static readWebTxtLog( filename: string ): WebTrial[] {
 
     logger.verbose( `reading Web log "${filename}"` );
@@ -107,11 +70,13 @@ export class Trials {
     try {
       buffer = fs.readFileSync( filename, 'utf8' );
     }
-    finally {
-      if (!buffer) {
-        logger.error( `cannot read ${filename}` );
-        return result;
-      }
+    catch {
+      buffer = null;
+    }
+
+    if (!buffer) {
+      logger.error( `cannot read ${filename}` );
+      return result;
     }
 
     const data = buffer.toString();
@@ -126,6 +91,43 @@ export class Trials {
     });
 
     return result;
+  }
+
+  public webTrials: WebTrial[] = [];
+  public tobiiTrials: TobiiTrial[] = [];
+
+  constructor( source: string ) {
+
+    let filenames = [ source ];
+
+    const sourceStats = fs.statSync( source );
+    if (sourceStats.isDirectory()) {
+
+      filenames = Folder.listFiles( source );
+    }
+
+    filenames.forEach( filename => {
+      const ext = filename.split('.').reduce( (r, v) => v, filename );
+
+      try {
+        if (ext === 'txt') {
+          const webTrials = Trials.readWebTxtLog( filename );
+          this.webTrials = this.webTrials.concat( webTrials );
+        }
+        if (ext === 'tsv') {
+          const tobiiTrial = Trials.readTobiiLog( filename );
+          if (tobiiTrial) {
+            this.tobiiTrials.push( ...tobiiTrial );
+          }
+        }
+        else {
+          throw new Error( 'handling other files is not implemented yet' );
+        }
+      }
+      catch (ex) {
+        console.error( ex );
+      }
+    });
   }
 
 }

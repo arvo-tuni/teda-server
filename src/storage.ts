@@ -25,12 +25,6 @@ let singleton: Storage | null = null;
 /// Emits
 ///   statistics( name )
 export default class Storage extends EventEmitter {
-  
-  private rootFolder = options['data-folder'];
-
-  protected constructor() {
-    super();
-  }
 
   static create() {
     if (!singleton) {
@@ -38,6 +32,12 @@ export default class Storage extends EventEmitter {
     }
 
     return singleton;
+  }
+
+  private rootFolder = options['data-folder'];
+
+  protected constructor() {
+    super();
   }
 
   append( test: string, trial: string, statistics: Statistics ) {
@@ -75,22 +75,22 @@ export default class Storage extends EventEmitter {
 
   private removeDeleted( all: NamedTests, toLeave: string[] ) {
 
-    const toRemove = Object.keys( all ).filter( name => !toLeave.includes( name ) )
-  
+    const toRemove = Object.keys( all ).filter( name => !toLeave.includes( name ) );
+
     toRemove.forEach( name => delete all[ name ] );
-  
+
     return toRemove.length;
   }
-  
+
   private appendMissing( current: NamedTests, all: string[] ) {
-  
+
     const missing = all.filter( name => !current[ name ] );
-  
+
     missing.forEach( name => {
       logger.verbose( `Storage: appending statistics for "${name}" ...` );
       this.emit( 'statistics', name );
      });
-  
+
     return missing.length;
   }
 }

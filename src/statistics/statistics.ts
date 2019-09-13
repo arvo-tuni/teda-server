@@ -74,7 +74,7 @@ function hitsTimed( data: WebLog.WrongAndCorrect[] & number[] ) {
   if (data.length > 0 && data[0].wrong === undefined ) {
     return {
       correct: (data as number[]),
-      wrong: []
+      wrong: [],
     } as Types.Hits;
   }
   else {
@@ -148,14 +148,14 @@ function saccadeDirections( saccades: Types.Saccade[] ) {
 }
 
 interface AngleData {
-  angle: number,
-  value: number,
+  angle: number;
+  value: number;
 }
 
 function saccadeDirectionRadar( saccades: Types.Saccade[] ) {
 
   const data: AngleData[] = [];
-  
+
   for (let i = 0; i < Params.ANGLE_RANGE_COUNT; i++) {
     data.push({
       angle: i * 45,

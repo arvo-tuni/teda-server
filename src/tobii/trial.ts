@@ -38,20 +38,21 @@ interface Timestamped {
 
 export default class Trial {
 
-  _headers: string[];
-  _gazeEvents: GazeEvent.Base[] = [];
   general: Tobii.General | null = null;
   samples: GazeEvent.Sample[] = [];
   events: Events = new Events();
   stimuli: TrialEvents.Stimuli[] = [];
-  
+
+  private headers: string[];
+  private rawGazeEvents: GazeEvent.Base[] = [];
+
   constructor( headers: string[] ) {
-    this._headers = headers.map( header => header.replace( /[\s\[\]]/g, '') );
+    this.headers = headers.map( header => header.replace( /[\s\[\]]/g, '') );
   }
 
   get gazeEvents(): GazeEvent.Base[] {
 
-    if (!this._gazeEvents.length) {
+    if (!this.rawGazeEvents.length) {
       let gazeEvent: GazeEvent.Base | null = null;
 
       this.samples.forEach( sample => {
@@ -86,7 +87,7 @@ export default class Trial {
 
           gazeEvent.samples.push( sample );
 
-          this._gazeEvents.push( gazeEvent );
+          this.rawGazeEvents.push( gazeEvent );
         }
         else if (!!gazeEvent) {
           gazeEvent.samples.push( sample );
@@ -94,7 +95,7 @@ export default class Trial {
       });
     }
 
-    return this._gazeEvents;
+    return this.rawGazeEvents;
   }
 
   get fixations() {
@@ -147,15 +148,15 @@ export default class Trial {
       }
       else {
         const eventType = Object.keys( TrialEvents.TYPES ).find( type => {
-          const eventType = (TrialEvents.TYPES as any)[ type ] as TrialEvents.EventType;
-          const evt = this._create( eventType.log, values );
-          if (evt) {
-            (this.events as any)[ type ].push( new (TrialEvents.TYPES as any)[ type ].cls( timestamp, evt ) );
+          const evt = (TrialEvents.TYPES as any)[ type ] as TrialEvents.EventType;
+          const obj = this._create( evt.log, values );
+          if (obj) {
+            (this.events as any)[ type ].push( new (TrialEvents.TYPES as any)[ type ].cls( timestamp, obj ) );
             return type;
           }
         });
 
-        if (eventType && eventType === 'studio' && this.events.studio.slice(-1)[0].StudioEvent === 'ScreenRecStarted' ) {
+        if (eventType === 'studio' && this.events.studio.slice(-1)[0].StudioEvent === 'ScreenRecStarted' ) {
           const stimuli = new TrialEvents.Stimuli( timestamp,
             this._create( 'Media', values ) as Tobii.Media,
             this._create( 'Scene', values ) as Tobii.Scene,
@@ -174,14 +175,14 @@ export default class Trial {
    * Makes a copy of the trial with same headers
    */
   fromExisting() {
-    return new Trial( this._headers );
+    return new Trial( this.headers );
   }
 
   /**
    * Makes a copy of the trial with all events limited to this range
    */
   range( start: number, end: number ) {
-    const result = new Trial( this._headers );
+    const result = new Trial( this.headers );
 
     const filter = (e: Timestamped) => {
       const ts = e.timestamp.LocalTimeStamp.getTime();
@@ -197,7 +198,7 @@ export default class Trial {
       (result.events as any)[ key ] = (this.events as any)[ key ].filter( filter );
     });
 
-    result._gazeEvents = this._gazeEvents.filter( filter );
+    result.rawGazeEvents = this.rawGazeEvents.filter( filter );
 
     return result;
   }
@@ -206,7 +207,7 @@ export default class Trial {
 
     const result = new (Tobii as any)[type]() as Tobii.Validable;
 
-    map( values, result, this._headers );
+    map( values, result, this.headers );
 
     result.validate();
 

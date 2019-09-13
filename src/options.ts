@@ -27,7 +27,7 @@ const optionsDefs = [{
     defaultValue: './data',
     typeLabel: '{underline string}',
     description: 'root data folder',
-  }, { 
+  }, {
     name: 'time-correction',
     alias: 't',
     type: Number,
@@ -47,7 +47,7 @@ const usageDefs = [{
     content: ['The data should structured as follows:',
         ' - each Python log file must be placed into a separate folder,',
         ' - Tobii Studio data should be exported into the same folder, one TSV file per each participant or a single file with all participants',
-        ' - by default, the app reads data from the folders located in "./data" folder, but this can be changed via options.'
+        ' - by default, the app reads data from the folders located in "./data" folder, but this can be changed via options.',
     ],
   }, {
     header: 'Options',
@@ -70,6 +70,6 @@ const usageDefs = [{
 
 const usage = commandLineUsage( usageDefs );
 
-console.log( usage );
+console.info( usage );
 
 export default options;

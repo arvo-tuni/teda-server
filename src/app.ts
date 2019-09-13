@@ -103,8 +103,8 @@ app.get( '/', ( req, res ) => {
         '/trial/:id/gaze/gazeAways': 'the trial gazeAways',
         '/trial/:id/stats/:from/:to': 'the trial statistics',
         '/stats/update': 'updates statistics when a new data folder was added',
-      }
-    }
+      },
+    },
   });
 });
 
@@ -238,7 +238,7 @@ function provideTrack( id: string, data: string, res: express.Response ) {
     return;
   }
 
-  const trial = currentTest.trials.find( trial => trial._id === id );
+  const trial = currentTest.trials.find( t => t._id === id );
 
   if ( trial ) {
     const obj = data ? (trial as any)[ data ] : trial;
@@ -258,7 +258,7 @@ function provideGazeData( id: string, data: string, res: express.Response ) {
     return;
   }
 
-  const trial = currentTest.trials.find( trial => trial._id === id );
+  const trial = currentTest.trials.find( t => t._id === id );
 
   if (trial) {
     const obj = data && trial.gaze ? (trial.gaze as any)[ data ] : trial.gaze;
@@ -283,7 +283,7 @@ function provideStats( id: string, res: express.Response, from?: number, to?: nu
     return;
   }
 
-  const trial = currentTest.trials.find( trial => trial._id === id );
+  const trial = currentTest.trials.find( t => t._id === id );
 
   if ( trial ) {
     const obj = {
@@ -347,7 +347,7 @@ function loadTrials( folder: string ): Error | Test  {
     const tobiiLogs = tobiiLogFiles.flatMap( tobiiLogFile => Trials.readTobiiLog( `${folder}/${tobiiLogFile}` ) );
 
     test.trials.forEach( trial => {
-      let trialGaze = tobiiLogs.find( tobiiLog => 
+      let trialGaze = tobiiLogs.find( tobiiLog =>
         tobiiLog.general ? tobiiLog.general.ParticipantName === trial.participantCode : false );
 
       if (!trialGaze) {

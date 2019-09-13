@@ -19,6 +19,7 @@
     "member-access": false,
     "one-line": ["check-open-brace", "check-whitespace"],
     "arrow-parens": false,
-    "max-classes-per-file": false
+    "max-classes-per-file": false,
+    "no-console": [true, "log", "dir"]
   }
 }

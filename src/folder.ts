@@ -14,9 +14,11 @@ export default class Folder {
 
   static listFiles( folder: string, re?: RegExp ): string[] {
     const filenames = fs.readdirSync( folder );
-    if (re)
+    if (re) {
       return filenames.filter( filename => re.test( filename ) );
-    else
+    }
+    else {
       return filenames;
+    }
   }
 }
