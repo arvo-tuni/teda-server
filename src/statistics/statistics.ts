@@ -8,20 +8,35 @@ import * as Params from './params';
 import * as Transform from './transform';
 import * as Reference from './reference';
 
-export function calculate( trial: WebTrial ) {
+export function calculate( trial: WebTrial, from?: number, to?: number ) {
   if (!trial.gaze) {
     return null;
   }
 
-  const fixations = Transform.fixations(
+  let fixations = Transform.fixations(
     trial.gaze.fixations,
     trial.events,
   );
 
-  const saccades = Transform.saccades( trial.gaze.fixations );
+  let saccades = Transform.saccades( trial.gaze.fixations );
+
+  if (from !== undefined && to !== undefined) {
+    const tsFrom = trial.metaExt.startTime.valueOf() + from;
+    const tsTo = trial.metaExt.startTime.valueOf() + to;
+
+    fixations = fixations.filter( fix => {
+      const ts = fix.timestamp.LocalTimeStamp.valueOf();
+      return tsFrom < ts && ts < tsTo;
+    });
+    saccades = saccades.filter( sacc => {
+      const ts = sacc.timestamp.LocalTimeStamp.valueOf();
+      return tsFrom < ts && ts < tsTo;
+    });
+  }
 
   return {
     type: trial.metaExt.type,
+    group: trial.meta.group,
     hits: hitsTimed( trial.hitsPerTenth ),
     fixations: {
       durationRanges: fixDurationsRange( fixations ),
@@ -46,7 +61,7 @@ export function reference( trial: WebTrial ) {
   } as Types.Reference;
 
   try {
-    ref.means = Reference.means( trial._id, trial.metaExt.type );
+    ref.means = Reference.means( trial._id, trial.metaExt.type, trial.meta.group );
   }
   catch (err) {
     logger.error( err );

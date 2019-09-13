@@ -34,6 +34,7 @@ export default class Trial extends WebLog.Schema {
     return {
       _id: this._id,
       participant: this.participantCode || (this.gaze && this.gaze.general ? this.gaze.general.ParticipantName : '' ),
+      group: this.participantGroup || 'default',
       timestamp: this.timestamp,
       type: this.resultWord || (this.gaze && this.gaze.general ? this.gaze.general.RecordingName : '' ),
     };

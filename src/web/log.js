@@ -82,6 +82,17 @@ export class TestEventBuild extends TestEvent {
   }
 }
 
+export class TestEventStimuli extends TestEvent {
+  constructor() {
+    super();
+
+    this.type = 'stimuli';
+
+    /** @type {String} */
+    this.name = String;
+  }
+}
+
 export class TestEventClicked extends TestEvent {
   constructor() {
     super();
@@ -305,6 +316,7 @@ export class Schema {
     this.events = [
       TestEvent,
       TestEventBuild,
+      TestEventStimuli,
       TestEventClicked,
       TestEventScroll,
       TestEventVeroNav,
@@ -319,8 +331,6 @@ export class Schema {
     this.headData = [ HeadData ];
     /** @type {HeadTotals} */
     this.headTotals = HeadTotals;
-
-    // new
     /** @type {String} */
     this.participantCode = String;
     /** @type {Number} */
@@ -329,5 +339,7 @@ export class Schema {
     this.lastMarked = Number;
     /** @type {Number[]} */
     this.markedWrong = [Number];
+    /** @type {String} */
+    this.participantGroup = String;
   }
 }

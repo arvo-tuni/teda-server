@@ -2,6 +2,7 @@ import { Timestamp } from '../tobii/log';
 
 export interface Data {
   type: string,
+  group: string,
   hits: Hits,
   fixations: {
     durationRanges: number[],

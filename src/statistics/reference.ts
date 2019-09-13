@@ -5,9 +5,12 @@ import logger from '../logger';
 
 const storage = Storage.create();
 
-export function means( trialId: string, trialType: string ) {
+export function means( trialId: string, trialType: string, userGroup: string ) {
 
-  const allStatistics = storage.getTrialsOfType( trialType, trialId );
+  const allStatistics = storage
+    .getTrialsOfType( trialType, trialId )
+    .filter( stats => !userGroup || stats.group === userGroup );
+
   const count = allStatistics.length;
 
   if (count === 0) {

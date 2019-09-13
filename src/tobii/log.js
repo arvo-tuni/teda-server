@@ -119,6 +119,8 @@ export class General extends Validable {
     /** @type {String} */
     this.ParticipantName = String;
     /** @type {String} */
+    this.GroupValue = String;
+    /** @type {String} */
     this.RecordingName = String;
     /** @type {Date} */
     this.RecordingDate = TobiiDateTime;

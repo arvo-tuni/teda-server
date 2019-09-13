@@ -4,6 +4,7 @@ export class TrialMeta {
   /* tslint:disable-next-line */
   _id: string = '';
   participant: string = '';
+  group: string = '';
   timestamp: Date = new Date();
   type: string = '';
 }

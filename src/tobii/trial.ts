@@ -46,7 +46,7 @@ export default class Trial {
   stimuli: TrialEvents.Stimuli[] = [];
   
   constructor( headers: string[] ) {
-    this._headers = headers.map( header => header.replace( /[\s()]/g, '') );
+    this._headers = headers.map( header => header.replace( /[\s\[\]]/g, '') );
   }
 
   get gazeEvents(): GazeEvent.Base[] {

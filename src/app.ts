@@ -101,7 +101,7 @@ app.get( '/', ( req, res ) => {
         '/trial/:id/gaze/fixations': 'the trial fixations',
         '/trial/:id/gaze/saccades': 'the trial saccades',
         '/trial/:id/gaze/gazeAways': 'the trial gazeAways',
-        '/trial/:id/stats': 'the trial statistics',
+        '/trial/:id/stats/:from/:to': 'the trial statistics',
         '/stats/update': 'updates statistics when a new data folder was added',
       }
     }
@@ -211,6 +211,9 @@ app.get( '/trial/:id/gaze/gazeAways', ( req, res ) => {
 app.get( '/trial/:id/stats', ( req, res ) => {
   provideStats( req.params.id, res );
 });
+app.get( '/trial/:id/stats/:from-:to', ( req, res ) => {
+  provideStats( req.params.id, res, +req.params.from, +req.params.to );
+});
 
 app.get( '/update', ( req, res ) => {
   folders = Folder.subfolders( options['data-folder'] );
@@ -274,7 +277,7 @@ function provideGazeData( id: string, data: string, res: express.Response ) {
   }
 }
 
-function provideStats( id: string, res: express.Response) {
+function provideStats( id: string, res: express.Response, from?: number, to?: number ) {
 
   if (!currentTest) {
     return;
@@ -284,7 +287,7 @@ function provideStats( id: string, res: express.Response) {
 
   if ( trial ) {
     const obj = {
-      data: Statistics.calculate( trial ),
+      data: Statistics.calculate( trial, from, to ),
       reference: Statistics.reference( trial ),
     } as StatData;
     res.status( 200 ).json( obj );
