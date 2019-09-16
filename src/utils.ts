@@ -126,3 +126,31 @@ export function clearUnused( obj: any ) {
     }
   });
 }
+
+export enum Target {
+  KEY,
+  VALUE,
+};
+
+/**
+ * Joins all keys/values into a linear array separated by comma
+ */
+export function linearize( obj: any, sep: string, target: Target, prefix: string = ''): string {
+  return Object.keys( obj ).map( key => {
+    const value = obj[ key ];
+    if (Array.isArray( value )) {
+      if (target === Target.KEY) {
+        return Object.keys( value ).map( i => `${prefix}${key}.${i}` ).join( sep );
+      }
+      else {
+        return value.map( (v: any) => v.toString()).join( sep );
+      }
+    }
+    else if (typeof value === 'object') {
+      return linearize( value, sep, target, `${prefix}${key}.` );
+    }
+    else {
+      return target === Target.KEY ? prefix + key : value.toString();
+    }
+  }).join( sep );
+}

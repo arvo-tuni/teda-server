@@ -3,13 +3,14 @@ import fs, { Stats } from 'fs';
 import cors from 'cors';
 
 import options from './options';
-import Storage from './storage';
+import { Storage, NamedTrials } from './storage';
 import Folder from './folder';
 import { Trials } from './trials';
+import { linearize, Target } from './utils';
 import WebTrial from './web/trial';
 
 import * as Statistics from './statistics/statistics';
-import { ReferencedData as StatData } from './statistics/types';
+import { ReferencedData as StatData, Data } from './statistics/types';
 
 import logger from './logger';
 
@@ -103,11 +104,13 @@ app.get( '/', ( req, res ) => {
         '/trial/:id/gaze/gazeAways': 'the trial gazeAways',
         '/trial/:id/stats/:from/:to': 'the trial statistics',
         '/stats/update': 'updates statistics when a new data folder was added',
+        '/stats/download': 'download statistics as a table',
       },
     },
   });
 });
 
+// Tests
 
 app.get( '/tests', ( req, res ) => {
   res.status( 200 ).json( folders );
@@ -137,6 +140,15 @@ app.put( '/test/:id', ( req, res ) => {
     logger.warn( error );
   }
 });
+
+app.get( '/test/:id/stats', ( req, res ) => {
+  const stats = storage.test( req.params.id );
+  const table = trialsTable( stats );
+  res.status( 200 ).json( table );
+  logger.verbose( 'OK' );
+});
+
+// Trials
 
 app.get( '/trials', ( req, res ) => {
   if (!currentTest) {
@@ -215,9 +227,9 @@ app.get( '/trial/:id/stats/:from-:to', ( req, res ) => {
   provideStats( req.params.id, res, +req.params.from, +req.params.to );
 });
 
-app.get( '/update', ( req, res ) => {
-  folders = Folder.subfolders( options['data-folder'] );
+// Other
 
+app.get( '/stats/update', ( req, res ) => {
   const report = storage.update();
   res.status( 200 ).json( report );
   logger.verbose( 'OK' );
@@ -295,9 +307,45 @@ function provideStats( id: string, res: express.Response, from?: number, to?: nu
   }
   else {
     const error = `no such trial "${id}"`;
-    res.status( 404 ).json( { error });
+    res.status( 404 ).json({ error });
     logger.warn( error );
   }
+}
+
+function trialsTable( stats: NamedTrials ) {
+  if (!currentTest || currentTest.trials.length === 0) {
+    return '';
+  }
+
+  const sep = ',';
+
+  let header = '';
+
+  const result = currentTest.trials.map( trial => {
+
+    const trialStats = stats[ trial.meta._id ];
+
+    if (!header) {
+      header = [
+        'timestamp',
+        'test',
+        'participant',
+      ]
+      .concat( linearize( trialStats, sep, Target.KEY ) )
+      .join( sep );
+    }
+
+    return [
+      trial.meta.timestamp.toString(),
+      trial.meta.type,
+      trial.meta.participant,
+      linearize( trialStats, sep, Target.VALUE ),
+    ].join( sep );
+  });
+
+  result.unshift( header );
+
+  return result.join( '\r\n' );
 }
 
 function loadTrials( folder: string ): Error | Test  {

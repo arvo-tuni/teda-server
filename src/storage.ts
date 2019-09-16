@@ -12,11 +12,11 @@ import logger from './logger';
 const db = new JsonDB( new Config( 'arvo', true, true, '/' ) );
 db.load();
 
-interface NamedTests {
+export interface NamedTests {
   [x: string]: NamedTrials;
 }
 
-interface NamedTrials {
+export interface NamedTrials {
   [x: string]: Statistics;
 }
 
@@ -24,7 +24,7 @@ let singleton: Storage | null = null;
 
 /// Emits
 ///   statistics( name )
-export default class Storage extends EventEmitter {
+export class Storage extends EventEmitter {
 
   static create() {
     if (!singleton) {
@@ -71,6 +71,11 @@ export default class Storage extends EventEmitter {
         })
         .map( trialId => test[ trialId ] as Statistics );
     });
+  }
+
+  test( testName: string ) {
+    const statistics = db.getData( '/' ) as NamedTests;
+    return statistics[ testName ];
   }
 
   private removeDeleted( all: NamedTests, toLeave: string[] ) {

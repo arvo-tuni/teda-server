@@ -1,6 +1,6 @@
 import * as Types from './types';
 
-import Storage from '../storage';
+import { Storage } from '../storage';
 import logger from '../logger';
 
 const storage = Storage.create();

@@ -70,6 +70,8 @@ export function reference( trial: WebTrial ) {
   return ref;
 }
 
+// Private
+
 function hitsTimed( data: WebLog.WrongAndCorrect[] & number[] ) {
   if (data.length > 0 && data[0].wrong === undefined ) {
     return {
