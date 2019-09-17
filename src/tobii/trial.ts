@@ -47,7 +47,7 @@ export default class Trial {
   private rawGazeEvents: GazeEvent.Base[] = [];
 
   constructor( headers: string[] ) {
-    this.headers = headers.map( header => header.replace( /[\s\[\]]/g, '') );
+    this.headers = headers.map( header => header.replace( /[\s\(\)\[\]]/g, '') );
   }
 
   get gazeEvents(): GazeEvent.Base[] {
