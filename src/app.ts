@@ -7,6 +7,7 @@ import { Storage, NamedTrials } from './storage';
 import Folder from './folder';
 import { Trials } from './trials';
 import { linearize, Target } from './utils';
+import { Tests } from './respTypes';
 import WebTrial from './web/trial';
 
 import * as Statistics from './statistics/statistics';
@@ -113,8 +114,17 @@ app.get( '/', ( req, res ) => {
 // Tests
 
 app.get( '/tests', ( req, res ) => {
-  res.status( 200 ).json( folders );
-  logger.verbose( 'OK' );
+  let currentTestName;
+  
+  if (currentTest) {
+    currentTestName = currentTest.folder.split('/').slice(-1)[0];
+  }
+  
+  res.status( 200 ).json({
+    names: folders,
+    current: currentTestName,
+  } as Tests);
+  logger.verbose( 'OK' + (currentTestName ? ` [${currentTestName}]` : '') );
 });
 
 app.put( '/test/:id', ( req, res ) => {
@@ -423,6 +433,7 @@ function loadTrials( folder: string ): Error | Test  {
     return new Error( `invalid data: no gaze data for participant ${nogazeTrial.participantCode}` );
   }
 
+  test.folder = folder;
   return test;
 }
 
