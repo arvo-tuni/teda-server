@@ -7,8 +7,7 @@ import { copyValue } from '../utils';
  * Copy value (if it exists) from raw data from Tobii log to the corresponding object property
  */
 function map( values: string[], dest: Tobii.Validable, keys: string[] ) {
-
-  Object.keys( dest ).forEach( key => {
+  for (let key in dest) {
     const index = keys.indexOf( key );
     if (index >= 0) {
       const valueStr = values[ index ];
@@ -16,7 +15,7 @@ function map( values: string[], dest: Tobii.Validable, keys: string[] ) {
         (dest as any)[ key ] = copyValue( valueStr, (dest as any)[ key ]);
       }
     }
-  });
+  };
 }
 
 enum AdditionResult {
@@ -194,9 +193,9 @@ export default class Trial {
     result.stimuli = this.stimuli.filter( filter );
     result.samples = this.samples.filter( filter );
 
-    Object.keys( this.events ).forEach( key => {
+    for (let key in this.events) {
       (result.events as any)[ key ] = (this.events as any)[ key ].filter( filter );
-    });
+    };
 
     result.rawGazeEvents = this.rawGazeEvents.filter( filter );
 
