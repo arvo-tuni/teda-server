@@ -11,7 +11,7 @@ export class Mouse extends Tobii.Mouse {
 
     this.timestamp = timestamp;
 
-    for (let key in source) {
+    for (const key in source) {
       (this as any)[ key ] = (source as any)[ key ];
     }
   }
@@ -26,7 +26,7 @@ export class Keyboard extends Tobii.KeyPress {
 
     this.timestamp = timestamp;
 
-    for (let key in source) {
+    for (const key in source) {
       (this as any)[ key ] = (source as any)[ key ];
     }
   }
@@ -41,7 +41,7 @@ export class Studio extends Tobii.Studio {
 
     this.timestamp = timestamp;
 
-    for (let key in source) {
+    for (const key in source) {
       (this as any)[ key ] = (source as any)[ key ];
     }
   }
@@ -56,7 +56,7 @@ export class External extends Tobii.External {
 
     this.timestamp = timestamp;
 
-    for (let key in source) {
+    for (const key in source) {
       (this as any)[ key ] = (source as any)[ key ];
     }
   }

@@ -20,6 +20,7 @@
     "one-line": ["check-open-brace", "check-whitespace"],
     "arrow-parens": false,
     "max-classes-per-file": false,
-    "no-console": [true, "log", "dir"]
+    "no-console": [true, "log", "dir"],
+    "forin": false
   }
 }

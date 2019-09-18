@@ -121,10 +121,10 @@ function addArray( dest: number[] | null, src: number[] | null | undefined ) {
 }
 
 function addObject( dest: Types.Angles, src: Types.Angles ) {
-  for (let key in src) {
+  for (const key in src) {
     const i = +key;
     dest[i] += src[i];
-  };
+  }
 }
 
 function divideArray( dest: number[] | null, divider: number ) {
@@ -136,7 +136,7 @@ function divideArray( dest: number[] | null, divider: number ) {
 }
 
 function divideObject( dest: Types.Angles, divider: number ) {
-  for (let key in dest) {
+  for (const key in dest) {
     dest[ +key ] /= divider;
-  };
+  }
 }

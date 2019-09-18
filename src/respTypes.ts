@@ -4,6 +4,6 @@ export interface UpdateInfo {
 }
 
 export interface Tests {
-  names: string[],
-  current?: string,
+  names: string[];
+  current?: string;
 }

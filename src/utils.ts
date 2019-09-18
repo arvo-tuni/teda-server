@@ -33,7 +33,7 @@ function estimateType( types: any[], src: any ): any {
  */
 export function copy( src: any, dest: any, types?: any[] ) {
 
-  for (let k in src) {
+  for (const k in src) {
 
     let type = dest[k];
 
@@ -70,7 +70,7 @@ export function copy( src: any, dest: any, types?: any[] ) {
     else {      // fixed value
       dest[k] = src[k];
     }
-  };
+  }
 }
 
 /**
@@ -107,7 +107,7 @@ export function copyValue( src: any, type: any ): any {
  * Removes unused fields after copying
  */
 export function clearUnused( obj: any ) {
-  for (let k in obj) {
+  for (const k in obj) {
     const type = obj[k];
     if (type === Number) {
       obj[k] = 0;
@@ -124,13 +124,13 @@ export function clearUnused( obj: any ) {
     else if (typeof type === 'function') {
       obj[k] = null;
     }
-  };
+  }
 }
 
 export enum Target {
   KEY,
   VALUE,
-};
+}
 
 /**
  * Joins all keys/values into a linear array separated by comma

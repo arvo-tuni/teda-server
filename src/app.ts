@@ -22,7 +22,7 @@ class Test {
 
 let currentTest: Test | null = null;
 
-let folders = Folder.subfolders( options['data-folder'] );
+const folders = Folder.subfolders( options['data-folder'] );
 
 const storage = Storage.create();
 storage.on( 'statistics', name => {
@@ -115,11 +115,11 @@ app.get( '/', ( req, res ) => {
 
 app.get( '/tests', ( req, res ) => {
   let currentTestName;
-  
+
   if (currentTest) {
     currentTestName = currentTest.folder.split('/').slice(-1)[0];
   }
-  
+
   res.status( 200 ).json({
     names: folders,
     current: currentTestName,

@@ -7,7 +7,7 @@ import { copyValue } from '../utils';
  * Copy value (if it exists) from raw data from Tobii log to the corresponding object property
  */
 function map( values: string[], dest: Tobii.Validable, keys: string[] ) {
-  for (let key in dest) {
+  for (const key in dest) {
     const index = keys.indexOf( key );
     if (index >= 0) {
       const valueStr = values[ index ];
@@ -15,7 +15,7 @@ function map( values: string[], dest: Tobii.Validable, keys: string[] ) {
         (dest as any)[ key ] = copyValue( valueStr, (dest as any)[ key ]);
       }
     }
-  };
+  }
 }
 
 enum AdditionResult {
@@ -183,21 +183,21 @@ export default class Trial {
   range( start: number, end: number ) {
     const result = new Trial( this.headers );
 
-    const filter = (e: Timestamped) => {
+    const inRange = (e: Timestamped) => {
       const ts = e.timestamp.LocalTimeStamp.getTime();
       return start < ts && ts < end;
     };
 
     result.general = this.general;
 
-    result.stimuli = this.stimuli.filter( filter );
-    result.samples = this.samples.filter( filter );
+    result.stimuli = this.stimuli.filter( inRange );
+    result.samples = this.samples.filter( inRange );
 
-    for (let key in this.events) {
-      (result.events as any)[ key ] = (this.events as any)[ key ].filter( filter );
-    };
+    for (const key in this.events) {
+      (result.events as any)[ key ] = (this.events as any)[ key ].filter( inRange );
+    }
 
-    result.rawGazeEvents = this.rawGazeEvents.filter( filter );
+    result.rawGazeEvents = this.rawGazeEvents.filter( inRange );
 
     return result;
   }
