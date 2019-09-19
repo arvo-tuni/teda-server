@@ -1,47 +1,33 @@
 import express from 'express';
-import fs, { Stats } from 'fs';
+import fs from 'fs';
 import cors from 'cors';
 
 import options from './options';
-import { Storage, NamedTrials } from './storage';
-import Folder from './folder';
-import { Trials } from './trials';
-import { linearize, Target } from './utils';
-import { Tests } from './respTypes';
-import WebTrial from './web/trial';
+import { Storage } from './storage';
+import { provider } from './provider';
+import Test from './test';
 
 import * as Statistics from './statistics/statistics';
-import { ReferencedData as StatData, Data } from './statistics/types';
+import { ReferencedData as StatData } from './statistics/types';
 
 import logger from './logger';
-
-class Test {
-  folder = '';
-  public trials: WebTrial[] = [];
-}
-
-let currentTest: Test | null = null;
-
-const folders = Folder.subfolders( options['data-folder'] );
 
 const storage = Storage.create();
 storage.on( 'statistics', name => {
 
   const folder = `${options['data-folder']}/${name}`;
-  const result = loadTrials( folder );
-  const error = result as Error;
+  const result = provider.loadTest( folder );
 
-  if (!error || !error.message) {
-    const test = result as Test;
-    test.trials.forEach( trial => {
+  if (result instanceof Test) {
+    result.trials.forEach( trial => {
       const statistics = Statistics.calculate( trial );
       if (statistics) {
         storage.append( name, trial._id, statistics );
       }
     });
- }
+  }
   else {
-    logger.error( error.message );
+    logger.error( result.message );
   }
 });
 
@@ -56,18 +42,22 @@ app.use( cors() );
 app.use( (req, res, next) => {
   logger.verbose( `${req.method.toUpperCase()} ${req.path}${req.params.id ? ':' + req.params.id : ''}` );
 
-  if (req.url.startsWith( '/trials' )) {
-    if (!currentTest) {
-      const error = 'test was not selected yet';
-      res.status( 403 ).json( { error } );
-      logger.warn( error );
-      return;
-    }
+  const error = provider.checkUrl( req.url );
+  if (error) {
+    res.status( 403 ).json({ error });
+    logger.warn( error );
+    return;
   }
-  else if (req.url.startsWith( '/trial/' )) {
-    if (!currentTest || currentTest.trials.length === 0) {
-      const error = 'trials were not loaded yet';
-      res.status( 403 ).json( { error } );
+
+  next();
+});
+
+app.use( (req, res, next) => {
+  const id = req.params.id;
+  if (req.url.startsWith( '/trial/' ) && id) {
+    if (!provider.currentTest!.hasTrial( id )) {
+      const error = `trial with id=${id} does not exist`;
+      res.status( 404 ).json({ error });
       logger.warn( error );
       return;
     }
@@ -86,7 +76,8 @@ app.get( '/', ( req, res ) => {
         '/test/:id': 'selects a test to start the service',
       },
       GET: {
-        '/tests': 'all tests',
+        '/tests': 'all tests + the test currently loaded',
+        '/test/:id/stats': 'downloads the trial statistics as a table',
         '/trials': 'meta data including IDs of all trials in the selected test',
         '/trial/:id': 'full trial data (WARNING! it may take tens of Mb to load)',
         '/trial/:id/meta': 'the trial extended meta data',
@@ -103,69 +94,58 @@ app.get( '/', ( req, res ) => {
         '/trial/:id/gaze/fixations': 'the trial fixations',
         '/trial/:id/gaze/saccades': 'the trial saccades',
         '/trial/:id/gaze/gazeAways': 'the trial gazeAways',
-        '/trial/:id/stats/:from/:to': 'the trial statistics',
+        '/trial/:id/stats': 'the trial statistics',
+        '/trial/:id/stats/:from-:to': 'the trial statistics limited in time (ms, relative to the start time)',
         '/stats/update': 'updates statistics when a new data folder was added',
-        '/stats/download': 'download statistics as a table',
       },
     },
   });
 });
 
-// Tests
+// tests routes
 
 app.get( '/tests', ( req, res ) => {
-  let currentTestName;
 
-  if (currentTest) {
-    currentTestName = currentTest.folder.split('/').slice(-1)[0];
-  }
+  const tests = provider.tests;
+  res.status( 200 ).json( tests );
 
-  res.status( 200 ).json({
-    names: folders,
-    current: currentTestName,
-  } as Tests);
-  logger.verbose( 'OK' + (currentTestName ? ` [${currentTestName}]` : '') );
+  logger.verbose( 'OK' + (tests.current ? ` [${tests.current}]` : '') );
 });
 
 app.put( '/test/:id', ( req, res ) => {
   const folder = `${options['data-folder']}/${req.params.id}`;
+
   if (fs.existsSync( folder )) {
+    const result = provider.loadTest( folder );
 
-    const result = loadTrials( folder );
-    const error = result as Error;
-
-    if (error && error.message) {
-      res.status( 500 ).json( { error });
-      logger.error( error );
+    if (result instanceof Error) {
+      res.status( 500 ).json({ error: result.message });
+      logger.error( result );
     }
     else {
-      currentTest = result as Test;
-      res.status( 200 ).json( { message: 'OK' });
+      provider.setCurrentTest( result );
+      res.status( 200 ).json({ message: 'OK' });
       logger.verbose( 'OK' );
     }
   }
   else {
-    const error = `no such folder "${folder}"`;
-    res.status( 404 ).json( { error });
+    const error = `folder ${folder} does not exist`;
+    res.status( 404 ).json({ error });
     logger.warn( error );
   }
 });
 
 app.get( '/test/:id/stats', ( req, res ) => {
   const stats = storage.test( req.params.id );
-  const table = trialsTable( stats );
+  const table = provider.currentTest!.trialsAsTable( stats );
   res.status( 200 ).json( table );
   logger.verbose( 'OK' );
 });
 
-// Trials
+// trial routes
 
 app.get( '/trials', ( req, res ) => {
-  if (!currentTest) {
-    return;
-  }
-
-  const result = currentTest.trials.map( trial => trial.meta );
+  const result = provider.currentTest!.transform( trial => trial.meta );
   res.status( 200 ).json( result );
   logger.verbose( 'OK' );
 });
@@ -237,204 +217,65 @@ app.get( '/trial/:id/stats/:from-:to', ( req, res ) => {
   provideStats( req.params.id, res, +req.params.from, +req.params.to );
 });
 
-// Other
+// other routes
 
 app.get( '/stats/update', ( req, res ) => {
-  const report = storage.update();
-  res.status( 200 ).json( report );
-  logger.verbose( 'OK' );
+  try {
+    const report = storage.update();
+    res.status( 200 ).json( report );
+    logger.verbose( 'OK' );
+  }
+  catch (err) {
+    res.status( 500 ).json({ error: err.message });
+    logger.error( err.message );
+  }
 });
 
 
-// start
+// exit point
+
 if (!options.help) {
   app.listen( options.port, () => {
     logger.info( `app listening on port ${options.port}` );
   });
 }
 
+// request methods
 
 function provideTrack( id: string, data: string, res: express.Response ) {
 
-  if (!currentTest) {
-    return;
-  }
+  const trial = provider.currentTest!.trial( id );
 
-  const trial = currentTest.trials.find( t => t._id === id );
-
-  if ( trial ) {
-    const obj = data ? (trial as any)[ data ] : trial;
-    res.status( 200 ).json( obj );
-    logger.verbose( 'OK' );
-  }
-  else {
-    const error = `no such trial "${id}"`;
-    res.status( 404 ).json( { error });
-    logger.warn( error );
-  }
+  const obj = data ? (trial as any)[ data ] : trial;
+  res.status( 200 ).json( obj );
+  logger.verbose( 'OK' );
 }
 
 function provideGazeData( id: string, data: string, res: express.Response ) {
 
-  if (!currentTest) {
-    return;
+  const trial = provider.currentTest!.trial( id );
+
+  const obj = data && trial.gaze ? (trial.gaze as any)[ data ] : trial.gaze;
+
+  if (Array.isArray( obj )) {
+    logger.verbose( `sending ${obj.length} items` );
   }
 
-  const trial = currentTest.trials.find( t => t._id === id );
-
-  if (trial) {
-    const obj = data && trial.gaze ? (trial.gaze as any)[ data ] : trial.gaze;
-
-    if (Array.isArray(obj)) {
-      logger.verbose( `sending ${obj.length} items` );
-    }
-
-    res.status( 200 ).json( obj );
-    logger.verbose( 'OK' );
-  }
-  else {
-    const error = `no such trial "${id}"`;
-    res.status( 404 ).json( { error });
-    logger.warn( error );
-  }
+  res.status( 200 ).json( obj );
+  logger.verbose( 'OK' );
 }
 
 function provideStats( id: string, res: express.Response, from?: number, to?: number ) {
 
-  if (!currentTest) {
-    return;
-  }
+  const trial = provider.currentTest!.trial( id );
 
-  const trial = currentTest.trials.find( t => t._id === id );
+  const obj = {
+    data: Statistics.calculate( trial, from, to ),
+    reference: Statistics.reference( trial ),
+  } as StatData;
 
-  if ( trial ) {
-    const obj = {
-      data: Statistics.calculate( trial, from, to ),
-      reference: Statistics.reference( trial ),
-    } as StatData;
-    res.status( 200 ).json( obj );
-    logger.verbose( 'OK' );
-  }
-  else {
-    const error = `no such trial "${id}"`;
-    res.status( 404 ).json({ error });
-    logger.warn( error );
-  }
-}
-
-function trialsTable( stats: NamedTrials ) {
-  if (!currentTest || currentTest.trials.length === 0) {
-    return '';
-  }
-
-  const sep = ',';
-
-  let header = '';
-
-  const result = currentTest.trials.map( trial => {
-
-    const trialStats = stats[ trial.meta._id ];
-
-    if (!header) {
-      header = [
-        'timestamp',
-        'test',
-        'participant',
-      ]
-      .concat( linearize( trialStats, sep, Target.KEY ) )
-      .join( sep );
-    }
-
-    return [
-      trial.meta.timestamp.toString(),
-      trial.meta.type,
-      trial.meta.participant,
-      linearize( trialStats, sep, Target.VALUE ),
-    ].join( sep );
-  });
-
-  result.unshift( header );
-
-  return result.join( '\r\n' );
-}
-
-function loadTrials( folder: string ): Error | Test  {
-
-  const webLogs = Folder.listFiles( folder, /(.*)\.txt/ );
-
-  if (!webLogs || webLogs.length === 0) {
-    return new Error( `no weblog files in the folder "${folder}"` );
-  }
-  if (webLogs.length > 1) {
-    return new Error( `invalid data: several weblogs found in "${folder}"` );
-  }
-
-  const test = new Test();
-
-  try {
-    test.trials = Trials.readWebTxtLog( `${folder}/${webLogs[0]}` ) || [];
-  }
-  catch (ex) {
-    return new Error( `weblog file is corrupted: ${ex.message || ex}` );
-  }
-
-  if (test.trials.length === 0) {
-    return new Error( `weblog file is corrupted` );
-  }
-
-  // Hours manually added here to compensate difference between Tobii and Web log timestamps.
-  // This may change in future
-  const hourOffset = options['time-correction'];
-  test.trials.forEach( trial => {
-    trial.timestamp.setHours( trial.timestamp.getHours() + hourOffset );
-    trial.startTime.setHours( trial.startTime.getHours() + hourOffset );
-    trial.endTime.setHours( trial.endTime.getHours() + hourOffset );
-    trial.events.forEach( event => event.timestamp.setHours( event.timestamp.getHours() + hourOffset ) );
-    trial.headData.forEach( hd => hd.timestamp.setHours( hd.timestamp.getHours() + hourOffset ) );
-  });
-
-  const tobiiLogFiles = Folder.listFiles( folder, /(.*)\.tsv/ );
-
-  if (test.trials.length === tobiiLogFiles.length) {   // one Tobii log file per trial in web log
-    for (let i = 0; i < test.trials.length; i++) {
-      test.trials[i].gaze = Trials.readTobiiLog( `${folder}/${tobiiLogFiles[i]}` )[0];
-    }
-  }
-  else if (test.trials[0].participantCode) {  // participant-based Tobii log file
-
-    const tobiiLogs = tobiiLogFiles.flatMap( tobiiLogFile => Trials.readTobiiLog( `${folder}/${tobiiLogFile}` ) );
-
-    test.trials.forEach( trial => {
-      let trialGaze = tobiiLogs.find( tobiiLog =>
-        tobiiLog.general ? tobiiLog.general.ParticipantName === trial.participantCode : false );
-
-      if (!trialGaze) {
-        return;
-      }
-
-      const startTimeEvent = trial.events.find( e => e.type === 'start' );
-      const endTimeEvent = trial.events.find( e => e.type === 'end' );
-      if (startTimeEvent && endTimeEvent) {
-        const startTime = startTimeEvent.timestamp.getTime(); // + 2*60*60*1000;
-        const endTime = endTimeEvent.timestamp.getTime(); // + 2*60*60*1000;
-
-        trialGaze = trialGaze.range( startTime, endTime );
-      }
-
-      trial.gaze = trialGaze;
-    });
-  }
-  else {
-    return new Error( `unsupported data structure` );
-  }
-
-  const nogazeTrial = test.trials.find( trial => !trial.gaze);
-  if (nogazeTrial) {
-    return new Error( `invalid data: no gaze data for participant ${nogazeTrial.participantCode}` );
-  }
-
-  test.folder = folder;
-  return test;
+  res.status( 200 ).json( obj );
+  logger.verbose( 'OK' );
 }
 
 export default app;

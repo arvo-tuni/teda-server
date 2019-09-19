@@ -16,7 +16,7 @@ export class Trials {
 
     let lastTimestamp: Date;
 
-    return Trials._read<WebTrial>( filename, row => {
+    return Trials.read<WebTrial>( filename, row => {
       if (row[0] === '{') {
         const jsonRecord = JSON.parse( row );
         return new WebTrial( lastTimestamp, jsonRecord );
@@ -41,7 +41,7 @@ export class Trials {
     logger.verbose( `reading Tobii log "${filename}"` );
 
     let trial: TobiiTrial | null = null;
-    Trials._read<TobiiTrial>( filename, row => {
+    Trials.read<TobiiTrial>( filename, row => {
 
       if (!trial) {    // the first log line contains a header
         trial = new TobiiTrial( row.split( '\t' ) );
@@ -62,7 +62,7 @@ export class Trials {
     return trials;
   }
 
-  static _read<T>( filename: string, cb: Callback<T> ): T[] {
+  private static read<T>( filename: string, cb: Callback<T> ): T[] {
 
     const result: T[] = [];
     let buffer;

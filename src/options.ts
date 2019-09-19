@@ -6,7 +6,7 @@ const optionsDefs = [{
     alias: 'h',
     type: Boolean,
     defaultValue: false,
-    description: 'generates this information',
+    description: 'shows this information and exits the app',
   }, {
     name: 'verbose',
     alias: 'v',
@@ -19,7 +19,7 @@ const optionsDefs = [{
     type: Number,
     defaultValue: 3000,
     typeLabel: '{underline number}',
-    description: 'port.',
+    description: 'port',
   }, {
     name: 'data-folder',
     alias: 'd',
