@@ -77,6 +77,7 @@ app.get( '/', ( req, res ) => {
       },
       GET: {
         '/tests': 'all tests + the test currently loaded',
+        '/tests/update': 'updates statistics when a new data folder was added',
         '/test/:id/stats': 'downloads the trial statistics as a table',
         '/trials': 'meta data including IDs of all trials in the selected test',
         '/trial/:id': 'full trial data (WARNING! it may take tens of Mb to load)',
@@ -96,7 +97,6 @@ app.get( '/', ( req, res ) => {
         '/trial/:id/gaze/gazeAways': 'the trial gazeAways',
         '/trial/:id/stats': 'the trial statistics',
         '/trial/:id/stats/:from-:to': 'the trial statistics limited in time (ms, relative to the start time)',
-        '/stats/update': 'updates statistics when a new data folder was added',
       },
     },
   });
@@ -110,6 +110,18 @@ app.get( '/tests', ( req, res ) => {
   res.status( 200 ).json( tests );
 
   logger.verbose( 'OK' + (tests.current ? ` [${tests.current}]` : '') );
+});
+
+app.get( '/tests/update', ( req, res ) => {
+  try {
+    const report = storage.update();
+    res.status( 200 ).json( report );
+    logger.verbose( 'OK' );
+  }
+  catch (err) {
+    res.status( 500 ).json({ error: err.message });
+    logger.error( err.message );
+  }
 });
 
 app.put( '/test/:id', ( req, res ) => {
@@ -215,20 +227,6 @@ app.get( '/trial/:id/stats', ( req, res ) => {
 });
 app.get( '/trial/:id/stats/:from-:to', ( req, res ) => {
   provideStats( req.params.id, res, +req.params.from, +req.params.to );
-});
-
-// other routes
-
-app.get( '/stats/update', ( req, res ) => {
-  try {
-    const report = storage.update();
-    res.status( 200 ).json( report );
-    logger.verbose( 'OK' );
-  }
-  catch (err) {
-    res.status( 500 ).json({ error: err.message });
-    logger.error( err.message );
-  }
 });
 
 
