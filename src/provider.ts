@@ -134,4 +134,4 @@ class Provider {
 
 const provider = new Provider();
 
-export { provider };
+export default provider;

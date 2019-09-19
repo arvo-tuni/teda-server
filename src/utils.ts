@@ -154,3 +154,9 @@ export function linearize( obj: any, sep: string, target: Target, prefix: string
     }
   }).join( sep );
 }
+
+export function copyPlain( src: any, dest: any ) {
+  for (const key in src) {
+    dest[ key ] = src[ key ];
+  }
+}

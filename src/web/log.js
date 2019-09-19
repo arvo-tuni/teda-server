@@ -198,7 +198,7 @@ export class TestEventInstruction extends TestEvent {
     this.type = 'instruction';
 
     /** @type {String[]} */
-    this.content = [String];
+    this.content = [ String ];
   }
 }
 
@@ -338,7 +338,7 @@ export class Schema {
     /** @type {Number} */
     this.lastMarked = Number;
     /** @type {Number[]} */
-    this.markedWrong = [Number];
+    this.markedWrong = [ Number ];
     /** @type {String} */
     this.participantGroup = String;
   }

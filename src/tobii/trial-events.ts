@@ -1,19 +1,20 @@
 import * as Tobii from './log';
+import { copyPlain as copy } from '../utils';
 
-type EventConstructor = new ( timestamp: Tobii.Timestamp, source: Tobii.Mouse ) => any;
+// TODO: create correct signatures of constructors
+
+type EventConstructor = new ( timestamp: Tobii.Timestamp, source: Tobii.Validable ) => any;
 
 export class Mouse extends Tobii.Mouse {
 
   timestamp: Tobii.Timestamp;
 
-  constructor( timestamp: Tobii.Timestamp, source: Tobii.Mouse ) {
+  constructor( timestamp: Tobii.Timestamp, source: Tobii.Validable ) {
     super();
 
     this.timestamp = timestamp;
 
-    for (const key in source) {
-      (this as any)[ key ] = (source as any)[ key ];
-    }
+    copy( source, this );
   }
 }
 
@@ -21,14 +22,12 @@ export class Keyboard extends Tobii.KeyPress {
 
   timestamp: Tobii.Timestamp;
 
-  constructor( timestamp: Tobii.Timestamp, source: Tobii.Mouse ) {
+  constructor( timestamp: Tobii.Timestamp, source: Tobii.Validable ) {
     super();
 
     this.timestamp = timestamp;
 
-    for (const key in source) {
-      (this as any)[ key ] = (source as any)[ key ];
-    }
+    copy( source, this );
   }
 }
 
@@ -36,14 +35,12 @@ export class Studio extends Tobii.Studio {
 
   timestamp: Tobii.Timestamp;
 
-  constructor( timestamp: Tobii.Timestamp, source: Tobii.Mouse ) {
+  constructor( timestamp: Tobii.Timestamp, source: Tobii.Validable ) {
     super();
 
     this.timestamp = timestamp;
 
-    for (const key in source) {
-      (this as any)[ key ] = (source as any)[ key ];
-    }
+    copy( source, this );
   }
 }
 
@@ -51,14 +48,12 @@ export class External extends Tobii.External {
 
   timestamp: Tobii.Timestamp;
 
-  constructor( timestamp: Tobii.Timestamp, source: Tobii.Mouse ) {
+  constructor( timestamp: Tobii.Timestamp, source: Tobii.Validable ) {
     super();
 
     this.timestamp = timestamp;
 
-    for (const key in source) {
-      (this as any)[ key ] = (source as any)[ key ];
-    }
+    copy( source, this );
   }
 }
 
@@ -72,7 +67,7 @@ export class EventType {
   }
 }
 
-export const TYPES = {
+export const TYPES: {[x: string]: EventType} = {
   mouse:    new EventType( 'Mouse', Mouse ),
   keyboard: new EventType( 'KeyPress', Keyboard ),
   studio:   new EventType( 'Studio', Studio ),

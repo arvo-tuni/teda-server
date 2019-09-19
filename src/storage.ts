@@ -60,14 +60,14 @@ export class Storage extends EventEmitter {
     } as UpdateInfo;
   }
 
-  getTrialsOfType( type: string, exeptionTrialId: string ) {
+  getTrialsOfType( type: string, exceptionTrialId: string ) {
     const statistics = db.getData( '/' ) as NamedTests;
     return Object.keys( statistics ).flatMap( testName => {
       const test = statistics[ testName ];
       return Object.keys( test )
         .filter( trialId => {
-          const trial = test[ trialId ] as Statistics;
-          return trial.type === type && trialId !== exeptionTrialId;
+          const trial = test[ trialId ];
+          return trial.type === type && trialId !== exceptionTrialId;
         })
         .map( trialId => test[ trialId ] as Statistics );
     });

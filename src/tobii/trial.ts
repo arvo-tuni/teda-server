@@ -110,7 +110,7 @@ export default class Trial {
   }
 
   add( values: string[] ): AdditionResult {
-    const general = this._create( 'General', values ) as Tobii.General;
+    const general = this.create( 'General', values ) as Tobii.General;
     if (!general) {
       return AdditionResult.Invalid;
     }
@@ -122,7 +122,7 @@ export default class Trial {
       return AdditionResult.AnotherParticipant;
     }
     else {
-      const timestamp = this._create( 'Timestamp', values ) as Tobii.Timestamp;
+      const timestamp = this.create( 'Timestamp', values ) as Tobii.Timestamp;
       if (!timestamp) {
         return AdditionResult.Invalid;
       }
@@ -136,30 +136,30 @@ export default class Trial {
       if (timestamp.EyeTrackerTimestamp) {
 
         const sample = new GazeEvent.Sample( timestamp,
-          this._create( 'Gaze', values ) as Tobii.Gaze,
-          this._create( 'GazeEvent', values ) as Tobii.GazeEvent,
-          this._create( 'EyePos', values ) as Tobii.EyePos,
-          this._create( 'Eye', values ) as Tobii.Eye,
-          this._create( 'Cam', values ) as Tobii.Cam,
+          this.create( 'Gaze', values ) as Tobii.Gaze,
+          this.create( 'GazeEvent', values ) as Tobii.GazeEvent,
+          this.create( 'EyePos', values ) as Tobii.EyePos,
+          this.create( 'Eye', values ) as Tobii.Eye,
+          this.create( 'Cam', values ) as Tobii.Cam,
         );
 
         this.samples.push( sample );
       }
       else {
         const eventType = Object.keys( TrialEvents.TYPES ).find( type => {
-          const evt = (TrialEvents.TYPES as any)[ type ] as TrialEvents.EventType;
-          const obj = this._create( evt.log, values );
+          const evt = TrialEvents.TYPES[ type ];
+          const obj = this.create( evt.log, values );
           if (obj) {
-            (this.events as any)[ type ].push( new (TrialEvents.TYPES as any)[ type ].cls( timestamp, obj ) );
+            (this.events as any)[ type ].push( new TrialEvents.TYPES[ type ].cls( timestamp, obj ) );
             return type;
           }
         });
 
         if (eventType === 'studio' && this.events.studio.slice(-1)[0].StudioEvent === 'ScreenRecStarted' ) {
           const stimuli = new TrialEvents.Stimuli( timestamp,
-            this._create( 'Media', values ) as Tobii.Media,
-            this._create( 'Scene', values ) as Tobii.Scene,
-            this._create( 'Segment', values ) as Tobii.Segment,
+            this.create( 'Media', values ) as Tobii.Media,
+            this.create( 'Scene', values ) as Tobii.Scene,
+            this.create( 'Segment', values ) as Tobii.Segment,
           );
 
           this.stimuli.push( stimuli );
@@ -202,7 +202,7 @@ export default class Trial {
     return result;
   }
 
-  _create( type: string, values: string[] ) {
+  private create( type: string, values: string[] ) {
 
     const result = new (Tobii as any)[type]() as Tobii.Validable;
 

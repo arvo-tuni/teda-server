@@ -4,7 +4,7 @@ import cors from 'cors';
 
 import options from './options';
 import { Storage } from './storage';
-import { provider } from './provider';
+import provider from './provider';
 import Test from './test';
 
 import * as Statistics from './statistics/statistics';

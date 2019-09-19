@@ -37,8 +37,8 @@ export class Size extends Validable {
     if (str) {
       const arr = str.split( 'x' );
       if (arr.length === 2) {
-        this.width = Number( arr[ 0 ] );
-        this.height = Number( arr[ 1 ] );
+        this.width = Number( arr[0] );
+        this.height = Number( arr[1] );
       }
     }
   }
