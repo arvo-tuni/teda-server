@@ -4,8 +4,6 @@ import { Tests } from './respTypes';
 import Test from './test';
 import { Trials } from './trials';
 
-const folders = Folder.subfolders( options['data-folder'] );
-
 class Provider {
 
   protected _currentTest: Test | null = null;
@@ -18,7 +16,7 @@ class Provider {
     }
 
     return {
-      names: folders,
+      names: Folder.subfolders( options['data-folder'] ),
       current: currentTestName,
     } as Tests;
   }
