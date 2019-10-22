@@ -1,7 +1,7 @@
 {
-  "name": "arvo-log-server",
+  "name": "eakr-log-server",
   "version": "0.0.1",
-  "description": "Gaze analysis & visualization for tests in ARVO",
+  "description": "Gaze analysis & visualization for tests conducted within EAKR project",
   "main": "./src/app.ts",
   "scripts": {
     "build": "tsc",

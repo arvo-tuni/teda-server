@@ -9,7 +9,7 @@ import { Data as Statistics } from './statistics/types';
 
 import logger from './logger';
 
-const db = new JsonDB( new Config( 'arvo', true, true, '/' ) );
+const db = new JsonDB( new Config( 'eakr', true, true, '/' ) );
 db.load();
 
 export interface NamedTests {

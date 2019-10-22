@@ -87,8 +87,6 @@ typings/
 # DynamoDB Local files
 .dynamodb/
 
-# custom
-data/
-data-old/
+# Custom
 build/
-arvo.json
+eakr.json

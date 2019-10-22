@@ -40,8 +40,8 @@ const optionsDefs = [{
 const options = commandLineArgs( optionsDefs );
 
 const usageDefs = [{
-    header: 'ARVO data server',
-    content: 'Reads data collected in ARVO tests, parses it, and opens a port to serve with the data.',
+    header: 'EAKR data server',
+    content: 'Reads data collected in EAKR tests, parses it, and opens a port to serve with the data.',
   }, {
     header: 'Data structure',
     content: ['The data should structured as follows:',
@@ -59,7 +59,7 @@ const usageDefs = [{
         example: '$ npm run start',
       }, {
         desc: '2. Data is located not in "./data".',
-        example: '$ npm run start -- -d c:/arvo-data',
+        example: '$ npm run start -- -d c:/eakr-data',
       }, {
         desc: '3. There is no more 2 hours time difference between Tobii and Python logs.',
         example: '$ npm run start -- -t 0',
