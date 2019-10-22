@@ -21,4 +21,10 @@ export default class Folder {
       return filenames;
     }
   }
+
+  static ensureExists( folder: string ) {
+    if (!fs.existsSync( folder )) {
+      fs.mkdirSync( folder );
+    }
+  }
 }

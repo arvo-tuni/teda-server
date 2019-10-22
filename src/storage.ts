@@ -38,6 +38,8 @@ export class Storage extends EventEmitter {
 
   protected constructor() {
     super();
+
+    Folder.ensureExists( this.rootFolder );
   }
 
   append( test: string, trial: string, statistics: Statistics ) {
